@@ -202,6 +202,29 @@ Lattice given by "Ambient free module of rank 2 over the principal ideal domain 
     (2/3, 2/3, 0, 0, 0, 0, 0, 0, 0, 0): {1/3: 3, 4/3: 723, 7/3: 7206}}
    ```
 
+   Computing Eisenstein series for a finite quadratic module:
+   ```
+   sage: from finite_quadratic_module import FiniteQuadraticModule
+   sage: from local_data_to_eisenstein_series import LocalSpaceByJordanData
+   sage: F = FiniteQuadraticModule(matrix(2,2,[0,1,1,0]))
+   sage: J = F.jordan_decomposition()
+   sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+   sage: el = L.discriminant_form_iterator().next()
+   sage: el.eisenstein_series(4, prec = 10)
+
+   {0: 1,
+    1: 240,
+    2: 2160,
+    3: 6720,
+    4: 17520,
+    5: 30240,
+    6: 60480,
+    7: 82560,
+    8: 140400,
+    9: 181680}
+   ```
+
+
 Dependencies
 ============
 
