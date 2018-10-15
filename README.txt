@@ -173,7 +173,7 @@ sage: L.eisenstein_series_by_orbits(5,prec = 10)
 
 ## Testing via the Siegel-Weil formula:
 
-sage: L2 = (L + Lattice(E8_matrix()))
+sage: L2 = (L + E(8))
 sage: L2.theta_series_symmetrized(prec = 3)
 {(0, 0, 0, 0, 0, 0, 0, 0, 0, 0): {0: 1, 1: 246, 2: 3600},
  (1/3, 1/3, 0, 0, 0, 0, 0, 0, 0, 0): {1/3: 3, 4/3: 723, 7/3: 7206},

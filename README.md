@@ -16,10 +16,15 @@ Installation
    ```
    You can now use the code by starting sage from this directory.
 
--  B) Sage worksheet:
+-  B) Use the code in CoCalc, (https://cocalc.com):
+ 
+   This is a nice possibility to try out the programs
+   if you don't have sage installed.
 
-   We have put the most important functions into a sage worksheet.
-   TODO:
+   Load the file integer_lattice.py into a project. 
+   Start a sage worksheet and proceed as in the tutorial.
+   This is enough to try out the most important algorithms.
+   If the other files are needed, also load them into the project.
 
 Tutorial
 ========
@@ -186,7 +191,7 @@ Lattice given by "Ambient free module of rank 2 over the principal ideal domain 
    ```
    Testing via the Siegel-Weil formula:
    ```
-   sage: L2 = (L + Lattice(E8_matrix()))
+   sage: L2 = (L + E(8))
    sage: L2.theta_series_symmetrized(prec = 3)
    {(0, 0, 0, 0, 0, 0, 0, 0, 0, 0): {0: 1, 1: 246, 2: 3600},
     (1/3, 1/3, 0, 0, 0, 0, 0, 0, 0, 0): {1/3: 3, 4/3: 723, 7/3: 7206},
@@ -194,5 +199,15 @@ Lattice given by "Ambient free module of rank 2 over the principal ideal domain 
    sage: L2.eisenstein_series(5,prec = 3)
    {(0, 0, 0, 0, 0, 0, 0, 0, 0, 0): {0: 1, 1: 246, 2: 3600},
     (1/3, 1/3, 0, 0, 0, 0, 0, 0, 0, 0): {1/3: 3, 4/3: 723, 7/3: 7206},
-    (2/3, 2/3, 0, 0, 0, 0, 0, 0, 0, 0): {1/3: 3, 4/3: 723, 7/3: 7206}} 
+    (2/3, 2/3, 0, 0, 0, 0, 0, 0, 0, 0): {1/3: 3, 4/3: 723, 7/3: 7206}}
    ```
+
+Dependencies
+============
+
+
+   - sage: A current version of sage
+   - psage.modules.finite_quadratic_module (N.-P. Skoruppa et. al.)
+     (This is necessary if the Eisenstein series is computed with respect to a finite quadratic module)
+
+
