@@ -208,6 +208,11 @@ Dependencies
 
    - sage: A current version of sage
    - psage.modules.finite_quadratic_module (N.-P. Skoruppa et. al.)
-     (This is necessary if the Eisenstein series is computed with respect to a finite quadratic module)
+     (This is necessary if the Eisenstein series is computed with respect to a finite quadratic module, you need to use the version included here, where it is possible to extract the data of the genus symbol.)
+
+ToDo
+====
+
+   - Integrate this into the genus symbol class (S.Ehlen) and remove the dependency on psage.
 
 
