@@ -36,12 +36,69 @@ from sage.structure.sage_object           import SageObject
 import itertools
 
 class LocalSpaceByJordanData(SageObject):
+    r"""
+    This class mimics a lattice, by providing local data.
 
+    INPUT:
+
+    The constructor may be called in the following ways:
+
+    #. ``LocalSpaceByJordanData(F.jordan_decomposition()._jordan_decomposition_data())``, where
+
+       - `F` -- a finite quadratic module
+
+    #. ``LocalSpaceByJordanData(J._jordan_decomposition_data())``, where
+
+       - `J` -- the Jordan decomposition of a finite quadratic module
+
+    EXAMPLES::
+
+        sage: from finite_quadratic_module import FiniteQuadraticModule
+        sage: F = FiniteQuadraticModule(matrix(2,2,[0,1,1,0]))
+        sage: J = F.jordan_decomposition()
+        sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+        sage: el = L.discriminant_form_iterator().next()
+        sage: el.eisenstein_series(4, prec = 10)
+
+        {0: 1,
+         1: 240,
+         2: 2160,
+         3: 6720,
+         4: 17520,
+         5: 30240,
+         6: 60480,
+         7: 82560,
+         8: 140400,
+         9: 181680}
+    """
     def __init__(self, jordan_decomposition_data):
         self.__jd_with_basis = jordan_decomposition_data
         self.__jd = {q: self.__jd_with_basis[q][1] for q in self.__jd_with_basis.keys()}
 
     def _oddity(self, component):
+        r"""
+        Returns the oddity of the given Jordan component
+
+        INPUT:
+
+            (2,n,r,eps) or (2,n,r,eps,t) -- the data of a 2-adic Jordan component of the form (2^n)^(eps*r)_t
+
+        OUTPUT:
+
+            an integer
+    
+        EXAMPLES::
+
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L._oddity((2,1,2,1))
+            0        
+            sage: L._oddity((2,2,1,-1,3))
+            3
+            sage: L.oddity()
+            3
+        """
         if len(component) > 4:
             p, n, r, eps, t = component
         else:
@@ -54,9 +111,53 @@ class LocalSpaceByJordanData(SageObject):
         return (t+k*4) % 8
 
     def oddity(self):
+        r"""
+        Returns the oddity of the underlying finite quadratic module.
+
+        INPUT:
+
+            NONE
+
+        OUTPUT:
+
+            an integer
+    
+        EXAMPLES::
+
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L._oddity((2,1,2,1))
+            0        
+            sage: L._oddity((2,2,1,-1,3))
+            3
+            sage: L.oddity()
+            3
+        """
         return sum(self._oddity(self.__jd[q]) for q in self.__jd.keys() if q % 2 == 0) % 8
 
     def _p_excess(self, component):
+        r"""
+        Returns the p-excess of the given Jordan component
+
+        INPUT:
+
+            (p,n,r,eps) -- the data of a p-adic Jordan component of the form (p^n)^(eps*r) for an odd prime p
+
+        OUTPUT:
+
+            an integer
+    
+        EXAMPLES::
+
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L._p_excess((3,1,1,-1))
+            6
+            sage: L.p_excess(3)
+            6
+        """
         p, n, r, eps = component
         if eps == 1 or n%2 == 0:
             k = 0
@@ -65,29 +166,167 @@ class LocalSpaceByJordanData(SageObject):
         return ((r*(p**n - 1)) + 4*k) % 8
             
     def p_excess(self, p):
+        r"""
+        Returns the p-excess of the underlying finite quadratic module
+
+        INPUT:
+
+            an odd prime
+
+        OUTPUT:
+
+            an integer
+    
+        EXAMPLES::
+
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L._p_excess((3,1,1,-1))
+            6
+            sage: L.p_excess(3)
+            6
+        """
         return sum(self._p_excess(self.__jd[q]) for q in self.__jd.keys() if q % p == 0) % 8
 
     def weil_index(self, p):
+        r"""
+        Returns the local Weil index of the underlying finite quadratic module for the prime p
+
+        INPUT:
+
+            a prime
+    
+        OUTPUT:
+
+            an 8-th roor of unity
+    
+        EXAMPLES::
+
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L.weil_index(2)
+            (1/2*I - 1/2)*sqrt(2)
+            sage: L.weil_index(3)
+            I
+            sage: L.weil_index(5)
+            1
+        """
         zeta_8 = exp(pi * I / 4)
-        #zeta_8 = CyclotomicField(8).gen()
         if p==2:
             return zeta_8**self.oddity()
         else:
             return zeta_8**-self.p_excess(p)
 
     def primes(self):
+        r"""
+        Returns the primes dividing the order of the underlying finite quadratic module.
+
+        INPUT:
+
+            NONE
+
+        OUTPUT:
+
+            a list of primes
+    
+        EXAMPLES::
+
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L.primes()
+            [2, 3]
+        """
         return Integer(prod(self.__jd.keys())).prime_divisors()
         
     def signature(self):
+        r"""
+        Returns the signature of the underlying finite quadratic module.
+
+        INPUT:
+
+            NONE
+
+        OUTPUT:
+
+            an integer
+    
+        EXAMPLES::
+
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L.signature()
+            5
+        """
         return (self.oddity() - sum(self.p_excess(p) for p in self.primes() if p != 2)) % 8
 
     def det(self):
-        return prod(self.__jd.keys())
+        r"""
+        Returns the order of the underlying finite quadratic module
+
+        INPUT:
+
+            NONE
+
+        OUTPUT:
+
+            an integer
+    
+        EXAMPLES::
+
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L.det()
+            48
+        """
+        return Integer(prod([q**self.__jd[q][2] for q in self.__jd.keys()]))
         
     def det_squarefree_part(self):
+        r"""
+        Returns the squarefree part of the order of the underlying finite quadratic module
+
+        INPUT:
+
+            NONE
+
+        OUTPUT:
+
+            an integer
+    
+        EXAMPLES::
+
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L.det_squarefree_part()
+            3
+        """
         return self.det().squarefree_part()
         
     def kappa_sign(self):
+        r"""
+        Returns the sign of the discriminant of the underlying finite quadratic module
+
+        INPUT:
+
+            NONE
+
+        OUTPUT:
+
+            -1 or +1
+    
+        EXAMPLES::
+
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L.kappa_sign()
+            1
+        """
         s = self.signature()
         if s % 2 == 0:
             return (-1)**(s / 2)
@@ -95,10 +334,42 @@ class LocalSpaceByJordanData(SageObject):
             return ((8-s)%4) - 2
 
     def kappa(self):
+        r"""
+        Returns an invariant usef for the computation of Eisenstein series.
+        Modulo a factor of 2, this is the squarefree part of the discriminant of the underlying finite quadratic module.
+
+        INPUT:
+
+            NONE
+
+        OUTPUT:
+
+            -1 or +1
+    
+        EXAMPLES::
+
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L.kappa()
+            6
+        """
         case = self.signature() % 2
         return Integer(self.kappa_sign() * abs(self.det_squarefree_part()) * 2**(case *(1 - 2*self.det_squarefree_part().valuation(2))))
         
     def _local_gram_matrix(self, component):
+        r"""
+        Returns a choice of a local Gram matrix for the given component
+
+        INPUT:
+
+            (p,n,r,eps) or (p,n,r,eps,t) -- the data of a p-adic Jordan component of the form (p^n)^(eps*r)_t
+
+        OUTPUT:
+
+            a matrix
+    
+        """
         if len(component) > 4:
             p, n, r, eps, t = component
             if eps == +1:
@@ -153,6 +424,31 @@ class LocalSpaceByJordanData(SageObject):
                     return 4 * p**n * identity_matrix(r)
         
     def local_normal_form(self, p):
+        r"""
+        Returns a choice of a local Gram matrix with respect to the prime p
+
+        INPUT:
+
+            p -- a prime
+
+        OUTPUT:
+
+            a matrix
+    
+        EXAMPLES::
+
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L.local_normal_form(2)
+
+            [ 0  2| 0]
+            [ 2  0| 0]
+            [-----+--]
+            [ 0  0|12]
+            sage: L.local_normal_form(3)
+            [6]
+        """
         return block_diagonal_matrix([self._local_gram_matrix(self.__jd[q]) for q in sorted([q for q in self.__jd.keys() if q % p == 0])])
 
     def valuation(self,i,p):
