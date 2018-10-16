@@ -452,6 +452,40 @@ class LocalSpaceByJordanData(SageObject):
         return block_diagonal_matrix([self._local_gram_matrix(self.__jd[q]) for q in sorted([q for q in self.__jd.keys() if q % p == 0])])
 
     def valuation(self,i,p):
+        """
+        Gets the p-order of the (i,i)-entry in the diagonalized local normal form if p is odd.
+        If p=2, get the 2-order of the of the upper right entry of the block containing the (i,i)-entry.
+
+        INPUT:
+            `i` -- an integer in range(self.dim())
+        
+            `p` -- a positive prime number
+
+        OUTPUT:
+            an integer
+    
+        EXAMPLES::
+
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L.local_normal_form(2)
+
+            [ 0  2| 0]
+            [ 2  0| 0]
+            [-----+--]
+            [ 0  0|12]
+            sage: L.valuation(0,2)
+            1
+            sage: L.valuation(1,2)
+            1
+            sage: L.valuation(2,2)
+            2
+            sage: L.local_normal_form(3)
+            [6]
+            sage: L.valuation(0,3)
+            1
+        """
         S=self.local_normal_form(p)
         if p==2:
             if i < S.ncols()-1 and  S[i,i+1]!=0:
@@ -461,6 +495,41 @@ class LocalSpaceByJordanData(SageObject):
         return valuation(S[i,i],p)
         
     def unit(self,i,p):
+        """
+        Gets the p-adic unit (=u) in the factorization of the (i,i)-entry (=2*u*p**e) in the diagonalized local normal form if p is odd.
+        If p=2 and the (i,i)-entry is contained in a 2x2-block, return 1. If If the (i,i)-entry (=u*p**e) forms a 1x1 block, return
+        the 2-adic unit (=u) in this factorization.
+
+        INPUT:
+            `i` -- an integer in range(self.dim())
+        
+            `p` -- a positive prime number
+
+        OUTPUT:
+            an integer
+    
+        EXAMPLES::
+
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L.local_normal_form(2)
+
+            [ 0  2| 0]
+            [ 2  0| 0]
+            [-----+--]
+            [ 0  0|12]
+            sage: L.unit(0,2)
+            1
+            sage: L.unit(1,2)
+            1
+            sage: L.unit(2,2)
+            3
+            sage: L.local_normal_form(3)
+            [6]
+            sage: L.unit(0,3)
+            1
+        """
         S = self.local_normal_form(p)
         if p==2:
             if i < S.ncols()-1 and  S[i,i+1]!=0:
@@ -472,6 +541,35 @@ class LocalSpaceByJordanData(SageObject):
             return p**(- self.valuation(i, p))*S[i,i] / 2
         
     def local_Q_p(self, element_tuple_p, p):
+        """
+        Evaluates the local quadratic form of the p-part of the underlying Jordan decomposition.
+
+        INPUT:
+            `element_tuple_p` -- a tuple
+        
+            `p` -- a positive prime number
+
+        OUTPUT:
+            a rational number
+    
+        EXAMPLES::
+
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L.local_normal_form(2)
+
+            [ 0  2| 0]
+            [ 2  0| 0]
+            [-----+--]
+            [ 0  0|12]
+            sage: L.local_Q_p((0,0,0),2)
+            0
+            sage: L.local_Q_p((0,0,1/2),2)
+            1/2
+            sage: L.local_Q_p((0,0,1/4),2)
+            3/8
+        """
         v = matrix([element_tuple_p])
         q_value = (v * self.local_normal_form(p) * v.transpose())[0,0] / Integer(2)
         #print v
@@ -481,10 +579,75 @@ class LocalSpaceByJordanData(SageObject):
         return q_value - floor(q_value)
             
     def Q(self, element_dict_by_p):
+        """
+        Evaluates the local quadratic (defined mod 1) form of an element of the underlying Jordan decomposition.
+        The element is expected to be a dictionary with prime keys.
+
+        INPUT:
+            `element_dict_by_p` -- a dictionary with prime keys and tuple values {p : tuple}
+
+        OUTPUT:
+            a rational number in [0,1)
+    
+        EXAMPLES::
+
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L.local_normal_form(2)
+
+            [ 0  2| 0]
+            [ 2  0| 0]
+            [-----+--]
+            [ 0  0|12]
+            sage: L.local_normal_form(3)
+            [6]
+            sage: L.Q({2 : (0,0,0), 3: (0)})
+            0
+            sage: L.Q({2 : (0,0,0), 3: (1/3)})
+            1/3
+            sage: L.Q({2 : (0,0,0), 3: (2/3)})
+            1/3
+            sage: L.Q({2 : (1/2,0,0), 3: (0)})
+            0
+            sage: L.Q({2 : (1/2,1/2,0), 3: (0)})
+            1/2
+            sage: L.Q({2 : (1/2,1/2,0), 3: (1/3)})
+            5/6
+            sage: L.Q({2 : (1/2,1/2,1/2), 3: (1/3)})
+            1/3
+        """
         q_value = sum(self.local_Q_p(element_dict_by_p[p], p) for p in element_dict_by_p.keys())
         return q_value - floor(q_value)
 
     def group_structure(self, p):
+        """
+        Returns the group sturcture of the p-part of the underlying Jordan decomposition
+        
+        INPUT:
+            `p` -- a prime
+        
+        OUTPUT:
+            a list
+    
+        EXAMPLES::
+
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L.local_normal_form(2)
+
+            [ 0  2| 0]
+            [ 2  0| 0]
+            [-----+--]
+            [ 0  0|12]
+            sage: L.local_normal_form(3)
+            [6]
+            sage: L.group_structure(2)
+            [2, 2, 4]
+            sage: L.group_structure(3)
+            [3]
+        """
         result = []
         for q in sorted([q for q in self.__jd.keys() if q % p == 0]):
             result += self.__jd[q][2] * [q]
