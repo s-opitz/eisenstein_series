@@ -2,6 +2,7 @@ Even Lattices
 =============
 
 Implementation of several algorithms for the computation (with sage) of vector valued Eisenstein series for the Weil representation w.r.t. an even lattice or a finite quadratic module.
+The algorithms are part of (and were written in the course of) the authors PhD thesis at the Technische Universität Darmstadt.
 
 Installation
 ============
@@ -12,7 +13,7 @@ Installation
 
    You should be able to simply run:
    ```
-    $ git clone https://github.com/s-opitz/evenlattices.git
+    $ git clone https://github.com/s-opitz/eisenstein_series.git
    ```
    You can now use the code by starting sage from this directory.
 
@@ -79,7 +80,7 @@ Tutorial
    sage: from integer_lattice import Lattice, A, E, H, U
    ```
 
-   You might like to try the following commands for a short introduction:
+   You might like to try the following command for a short introduction:
    ```
    sage: Lattice?
    ```
