@@ -1,5 +1,5 @@
-Even Lattices
-=============
+Vector Valued Eisenstein Series
+===============================
 
 Implementation of several algorithms for the computation (with sage) of vector valued Eisenstein series for the Weil representation w.r.t. an even lattice or a finite quadratic module.
 The algorithms are part of (and were written in the course of) the authors PhD thesis at the Technische Universität Darmstadt.
