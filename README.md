@@ -30,6 +30,51 @@ Tutorial
 ========
 
    To start computing vector valued Eisenstein series, run the following command from the directory containing the file integer_lattice.py:
+
+   ```
+   sage: from eisenstein import EisensteinSeries
+
+   # The classical Eisenstein series of weight 4:
+   sage: EisensteinSeries('', 4)
+
+   A vector valued q-series with coefficients
+   (): 1 q^(0) + 240 q^(1) + 2160 q^(2) + O(q^(3))
+
+   # These Fourier coefficients were tested with the Siegel-Weil formula:
+   sage: EisensteinSeries(matrix(2,2,[2,1,1,2]), weight = 5)
+
+   A vector valued q-series with coefficients
+   (0, 0): 1 q^(0) + 246 q^(1) + 3600 q^(2) + O(q^(3))
+   (1/3, 1/3): 3 q^(1/3) + 723 q^(4/3) + 7206 q^(7/3) + O(q^(10/3))
+   (2/3, 2/3): 3 q^(1/3) + 723 q^(4/3) + 7206 q^(7/3) + O(q^(10/3))
+
+   # Using the negative Gram matrix and the dual Weil representation gives the same result:
+   sage: EisensteinSeries(- matrix(2,2,[2,1,1,2]), weight = 5, dual = True)
+
+   A vector valued q-series with coefficients
+   (0, 0): 1 q^(0) + 246 q^(1) + 3600 q^(2) + O(q^(3))
+   (1/3, 1/3): 3 q^(1/3) + 723 q^(4/3) + 7206 q^(7/3) + O(q^(10/3))
+   (2/3, 2/3): 3 q^(1/3) + 723 q^(4/3) + 7206 q^(7/3) + O(q^(10/3))
+
+   # We can also compute the Eisenstein series from a genus symbol:
+   sage: EisensteinSeries('3^-1', 5)
+
+   A vector valued q-series with coefficients
+   ((3, (0, 0, 0, 0)),): 1 q^(0) + 246 q^(1) + 3600 q^(2) + O(q^(3))
+   ((3, (0, 0, 0, 1/3)),): 3 q^(1/3) + 723 q^(4/3) + 7206 q^(7/3) + O(q^(10/3))
+   ((3, (0, 0, 0, 2/3)),): 3 q^(1/3) + 723 q^(4/3) + 7206 q^(7/3) + O(q^(10/3))
+
+   # Using the genus symbol for the finite quadratic module twisted with -1
+   # and the dual Weil representation gives the same result:
+   sage: EisensteinSeries('3^1', 5, dual = True)
+
+   A vector valued q-series with coefficients
+   ((3, (0, 0, 0, 0)),): 1 q^(0) + 246 q^(1) + 3600 q^(2) + O(q^(3))
+   ((3, (0, 0, 0, 1/3)),): 3 q^(1/3) + 723 q^(4/3) + 7206 q^(7/3) + O(q^(10/3))
+   ((3, (0, 0, 0, 2/3)),): 3 q^(1/3) + 723 q^(4/3) + 7206 q^(7/3) + O(q^(10/3))
+   ```
+   
+   The Lattice class can do more than just compute Eisestein series, for a start try out the following:
    ```
    sage: from integer_lattice import Lattice, A, E, H, U
    ```
@@ -69,7 +114,7 @@ Tutorial
 
    sage: A(2)
 
-Lattice given by "Ambient free module of rank 2 over the principal ideal domain Integer Ring" endowed with the quadratic form "Quadratic form in 2 variables over Integer Ring with coefficients: 
+   Lattice given by "Ambient free module of rank 2 over the principal ideal domain Integer Ring" endowed with the quadratic form "Quadratic form in 2 variables over Integer Ring with coefficients: 
    [ 1 -1 ]
    [ * 1 ]"
 
@@ -142,6 +187,11 @@ Lattice given by "Ambient free module of rank 2 over the principal ideal domain 
      7: 82560,
      8: 140400,
      9: 181680}}
+   sage: EisensteinSeries(_)
+
+   A vector valued q-series with coefficients
+   (0, 0): 1 q^(0) + 240 q^(1) + 2160 q^(2) + 6720 q^(3) + 17520 q^(4) + 30240 q^(5) + 60480 q^(6) + 82560 q^(7) + 140400 q^(8) + 181680 q^(9) + O(q^(10))
+
    sage: L.eisenstein_series(6, prec = 10)
    {(0, 0): {0: 1,
      1: -504,
@@ -153,6 +203,10 @@ Lattice given by "Ambient free module of rank 2 over the principal ideal domain 
      7: -8471232,
      8: -17047800,
      9: -29883672}}
+   sage: EisensteinSeries(_)
+
+   A vector valued q-series with coefficients
+   (0, 0): 1 q^(0) + -504 q^(1) + -16632 q^(2) + -122976 q^(3) + -532728 q^(4) + -1575504 q^(5) + -4058208 q^(6) + -8471232 q^(7) + -17047800 q^(8) + -29883672 q^(9) + O(q^(10))
    ```
 
    Computing isometry orbits for the discriminant group of L:
