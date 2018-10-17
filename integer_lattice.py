@@ -5795,13 +5795,13 @@ class LatticeSpaceElementOverQQ(FreeModuleElement_generic_dense):
             `s` -- an integer, a rational or a complex number
 
         OUTPUT:
-            a polynomial or rational function in one variable.
+            a number (mostly complex or rational, depending on the input)
 
         EXAMPLES::
 
             sage: L = Lattice(ZZ, 1, [1])
             sage: el = LatticeSpaceElementOverQQ(L, (0,))
-            sage: el.Wpoly(2,1/2)
+            sage: el.W(2,1/2,4)
             0
         
             sage: el.W(2,1,4)
