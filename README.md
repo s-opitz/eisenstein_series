@@ -292,7 +292,7 @@ Dependencies
 ToDo
 ====
 
-   - Integrate this into the genus symbol class (S.Ehlen) and remove the dependency on psage.
+   - Integrate the local algorithms into the genus symbol class (S.Ehlen) and remove the dependency on psage.
    - Make the code completely compatible with sage version 8.3.
    
 
