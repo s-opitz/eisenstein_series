@@ -7,7 +7,7 @@ The algorithms are part of (and were written in the course of) the authors PhD t
 Installation
 ============
 
--  A) On your own computer which has sage and git installed:
+-  A) On your own computer which has sage (we recommend version 8.1) and git installed (see dependencies below):
 
    Go to the directory where you would like to download the repository to.
 
@@ -284,13 +284,16 @@ Dependencies
 ============
 
    - sage: A current version of sage
-   - psage.modules.finite_quadratic_module (N.-P. Skoruppa et. al.)
+   - finite_quadratic_module from psage (N.-P. Skoruppa et. al.)
      (This is necessary if the Eisenstein series is computed with respect to a finite quadratic module, you need to use the version included here, where it is possible to extract the data of the genus symbol.)
+     Some functions in this module produce errors when using version 8.3 of sage. It is due to this, that we cannot currently support sage version 8.3 (completely) and hence recommend to use version 8.1.
+   - genus_symbol from sfqm (S. Ehlen)
 
 ToDo
 ====
 
    - Integrate this into the genus symbol class (S.Ehlen) and remove the dependency on psage.
+   - Make the code completely compatible with sage version 8.3.
    
 
 

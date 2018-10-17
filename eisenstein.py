@@ -27,6 +27,7 @@ AUTHORS:
 from sage.all import matrix, Integer
 from sage.structure.sage_object           import SageObject
 from finite_quadratic_module import FiniteQuadraticModule
+from genus_symbol import GenusSymbol
 from local_data_to_eisenstein_series import LocalSpaceByJordanData
 from integer_lattice import Lattice
 
@@ -100,14 +101,18 @@ class EisensteinSeries(SageObject):
             self._coeff_dict = data
         elif isinstance(data, str):
             #print "str"
-            if data == '':
-                F = FiniteQuadraticModule(matrix(2,2,[0,1,1,0]))
-            else:
-                F = FiniteQuadraticModule(data)
-            if dual:
-                F = F.twist(Integer(-1))
-            J = F.jordan_decomposition()
-            L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            try:
+                if data == '':
+                    F = FiniteQuadraticModule(matrix(2,2,[0,1,1,0]))
+                else:
+                    F = FiniteQuadraticModule(data)
+                if dual:
+                    F = F.twist(Integer(-1))
+                J = F.jordan_decomposition()
+                L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            except:
+                jd = genus_symbol_dict_to_jd(GenusSymbol(data)._symbol_dict)
+                L = LocalSpaceByJordanData(jd)
             self._coeff_dict = L.eisenstein_series(weight, prec = prec)
         else:
             #print "else"
@@ -131,3 +136,18 @@ def dict_to_q_series(d):
             s += str(d[power]) + ' q^(' + str(power) + ') + '
     s += 'O(q^(' + str(power + 1) + '))'
     return s
+
+def genus_symbol_dict_to_jd(d):
+    result = {}
+    for p in d.keys():
+        for c in d[p]:
+            if p == 2:
+                n, r, eps, b, t = c
+                if b:
+                    result[p**n] = ((), (p, n, r, eps, t))
+                else:
+                    result[p**n] = ((), (p, n, r, eps))
+            else:
+                n, r, eps = c
+                result[p**n] = ((), (p, n, r, eps))
+    return result

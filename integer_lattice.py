@@ -31,7 +31,6 @@ from sage.all import Zmod, RR, QQ, ZZ, kronecker_character, is_odd, is_even, pro
     matrix, Matrix, sign, I, pi
 from sage.modules.free_module_element import *
 from sage.modules.free_module import *
-from sage.matrix.matrix import is_Matrix
 from sage.arith.all import GCD, LCM, valuation, is_prime, is_squarefree, kronecker_symbol, moebius, sigma, CRT
 from sage.rings.big_oh import O
 from sage.rings.infinity import Infinity
@@ -170,7 +169,7 @@ class Lattice(FreeModule_ambient_pid):
             n = S.parent().dims()[0]        
                 
         ## Deal with:  Lattice(matrix)
-        elif is_Matrix(R) and R.is_square():
+        elif isinstance(R, sage.matrix.matrix_integer_dense.Matrix_integer_dense) and R.is_square():
             self.Q = QuadraticForm(R)
             S=R
             _R=S.base_ring()
