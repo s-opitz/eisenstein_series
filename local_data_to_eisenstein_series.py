@@ -1,37 +1,17 @@
-"""
-Classes and functions for finite quadratic modules such that their vector valued
-Eisenstein series (w.r.t the Weil representation) can be computed.
-
-AUTHORS:
-
-- Sebastian Opitz
-"""
-
-#*****************************************************************************
-#       Copyright (C) 2018 Sebastian Opitz
-#
-#  Distributed under the terms of the GNU General Public License (GPL)
-#
-#    This code is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#    General Public License for more details.
-#
-#  The full text of the GPL is available at:
-#
-#                  http://www.gnu.org/licenses/
-#*****************************************************************************
-
 from sage.all import Zmod, CC, RR, QQ, ZZ, is_odd, is_even, prod, infinity, Zp, valuation, \
     hilbert_symbol, floor, sqrt, Integer, identity_matrix, diagonal_matrix, block_diagonal_matrix, \
-    matrix, Matrix, sign, I, pi
-from sage.arith.misc import GCD, valuation, is_prime, is_squarefree, kronecker_symbol, moebius, sigma, CRT
+    matrix, Matrix, sign, I, pi, squarefree_part, factor, QuadraticForm, DiagonalQuadraticForm, \
+    vector, denominator, gcd, frac, zeta
+from sage.arith.misc import GCD, LCM, valuation, is_prime, is_squarefree, kronecker_symbol, moebius, sigma, CRT
 from sage.functions.log                   import log, exp
+from sage.functions.transcendental import zeta
 from sage.quadratic_forms.special_values import quadratic_L_function__exact, gamma__exact, zeta__exact
 from sage.rings.infinity import Infinity
 from sage.rings.complex_number import ComplexNumber
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.structure.sage_object           import SageObject
+
+from sage.misc.cachefunc import cached_function, cached_method
 
 import itertools
 
@@ -75,6 +55,11 @@ class LocalSpaceByJordanData(SageObject):
         self.__jd_with_basis = jordan_decomposition_data
         self.__jd = {q: self.__jd_with_basis[q][1] for q in self.__jd_with_basis.keys()}
 
+    @cached_method
+    def _cache_key(self):
+        return tuple([(q, self.__jd[q]) for q in sorted(self.__jd.keys())])
+
+    @cached_method
     def _oddity(self, component):
         r"""
         Returns the oddity of the given Jordan component
@@ -89,6 +74,7 @@ class LocalSpaceByJordanData(SageObject):
     
         EXAMPLES::
 
+            sage: from finite_quadratic_module import FiniteQuadraticModule
             sage: F = FiniteQuadraticModule('2^2.4_3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
@@ -110,6 +96,7 @@ class LocalSpaceByJordanData(SageObject):
             k = 1
         return (t+k*4) % 8
 
+    @cached_method
     def oddity(self):
         r"""
         Returns the oddity of the underlying finite quadratic module.
@@ -124,6 +111,7 @@ class LocalSpaceByJordanData(SageObject):
     
         EXAMPLES::
 
+            sage: from finite_quadratic_module import FiniteQuadraticModule
             sage: F = FiniteQuadraticModule('2^2.4_3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
@@ -150,6 +138,7 @@ class LocalSpaceByJordanData(SageObject):
     
         EXAMPLES::
 
+            sage: from finite_quadratic_module import FiniteQuadraticModule
             sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
@@ -164,7 +153,8 @@ class LocalSpaceByJordanData(SageObject):
         else:
             k = 1
         return ((r*(p**n - 1)) + 4*k) % 8
-            
+
+    @cached_method
     def p_excess(self, p):
         r"""
         Returns the p-excess of the underlying finite quadratic module
@@ -179,6 +169,7 @@ class LocalSpaceByJordanData(SageObject):
     
         EXAMPLES::
 
+            sage: from finite_quadratic_module import FiniteQuadraticModule
             sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
@@ -203,6 +194,7 @@ class LocalSpaceByJordanData(SageObject):
     
         EXAMPLES::
 
+            sage: from finite_quadratic_module import FiniteQuadraticModule
             sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
@@ -214,11 +206,13 @@ class LocalSpaceByJordanData(SageObject):
             1
         """
         zeta_8 = exp(pi * I / 4)
+        #zeta_8 = CyclotomicField(8).gen()
         if p==2:
             return zeta_8**self.oddity()
         else:
             return zeta_8**-self.p_excess(p)
 
+    @cached_method
     def primes(self):
         r"""
         Returns the primes dividing the order of the underlying finite quadratic module.
@@ -233,6 +227,7 @@ class LocalSpaceByJordanData(SageObject):
     
         EXAMPLES::
 
+            sage: from finite_quadratic_module import FiniteQuadraticModule
             sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
@@ -240,7 +235,8 @@ class LocalSpaceByJordanData(SageObject):
             [2, 3]
         """
         return Integer(prod(self.__jd.keys())).prime_divisors()
-        
+
+    @cached_method
     def signature(self):
         r"""
         Returns the signature of the underlying finite quadratic module.
@@ -255,6 +251,7 @@ class LocalSpaceByJordanData(SageObject):
     
         EXAMPLES::
 
+            sage: from finite_quadratic_module import FiniteQuadraticModule
             sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
@@ -263,6 +260,7 @@ class LocalSpaceByJordanData(SageObject):
         """
         return (self.oddity() - sum(self.p_excess(p) for p in self.primes() if p != 2)) % 8
 
+    @cached_method
     def det(self):
         r"""
         Returns the order of the underlying finite quadratic module
@@ -277,6 +275,7 @@ class LocalSpaceByJordanData(SageObject):
     
         EXAMPLES::
 
+            sage: from finite_quadratic_module import FiniteQuadraticModule
             sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
@@ -284,7 +283,7 @@ class LocalSpaceByJordanData(SageObject):
             48
         """
         return Integer(prod([q**self.__jd[q][2] for q in self.__jd.keys()]))
-        
+
     def det_squarefree_part(self):
         r"""
         Returns the squarefree part of the order of the underlying finite quadratic module
@@ -299,6 +298,7 @@ class LocalSpaceByJordanData(SageObject):
     
         EXAMPLES::
 
+            sage: from finite_quadratic_module import FiniteQuadraticModule
             sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
@@ -306,7 +306,8 @@ class LocalSpaceByJordanData(SageObject):
             3
         """
         return self.det().squarefree_part()
-        
+
+    @cached_method
     def kappa_sign(self):
         r"""
         Returns the sign of the discriminant of the underlying finite quadratic module
@@ -321,6 +322,7 @@ class LocalSpaceByJordanData(SageObject):
     
         EXAMPLES::
 
+            sage: from finite_quadratic_module import FiniteQuadraticModule
             sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
@@ -329,10 +331,11 @@ class LocalSpaceByJordanData(SageObject):
         """
         s = self.signature()
         if s % 2 == 0:
-            return (-1)**(s / 2)
+            return Integer(-1)**(s / 2)
         else:
             return ((8-s)%4) - 2
 
+    @cached_method
     def kappa(self):
         r"""
         Returns an invariant usef for the computation of Eisenstein series.
@@ -348,6 +351,7 @@ class LocalSpaceByJordanData(SageObject):
     
         EXAMPLES::
 
+            sage: from finite_quadratic_module import FiniteQuadraticModule
             sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
@@ -368,7 +372,24 @@ class LocalSpaceByJordanData(SageObject):
         OUTPUT:
 
             a matrix
-    
+
+        EXAMPLES::
+
+            sage: L._local_gram_matrix((2,1,2,1))
+
+            [0 2]
+            [2 0]
+            sage: L._local_gram_matrix((2,1,2,-1))
+
+            [4 2]
+            [2 4]
+            sage: L._local_gram_matrix((2,2,1,-1,3))
+            [12]
+            sage: L._local_gram_matrix((2,2,3,-1,3))
+            
+            [12  0  0]
+            [ 0  0  4]
+            [ 0  4  0]
         """
         if len(component) > 4:
             p, n, r, eps, t = component
@@ -422,7 +443,8 @@ class LocalSpaceByJordanData(SageObject):
                     return 2 * p**n * diagonal_matrix([2 for j in range(r-1)] + [a])
                 else:
                     return 4 * p**n * identity_matrix(r)
-        
+
+    @cached_method
     def local_normal_form(self, p):
         r"""
         Returns a choice of a local Gram matrix with respect to the prime p
@@ -437,20 +459,47 @@ class LocalSpaceByJordanData(SageObject):
     
         EXAMPLES::
 
+            sage: from finite_quadratic_module import FiniteQuadraticModule
             sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
             sage: L.local_normal_form(2)
 
-            [ 0  2| 0]
-            [ 2  0| 0]
-            [-----+--]
-            [ 0  0|12]
+            [ 0  1  0  0  0]
+            [ 1  0  0  0  0]
+            [ 0  0  0  2  0]
+            [ 0  0  2  0  0]
+            [ 0  0  0  0 12]
             sage: L.local_normal_form(3)
-            [6]
-        """
-        return block_diagonal_matrix([self._local_gram_matrix(self.__jd[q]) for q in sorted([q for q in self.__jd.keys() if q % p == 0])])
 
+            [-2  0  0]
+            [ 0  4  0]
+            [ 0  0  6]
+
+        """
+        result = block_diagonal_matrix([self._local_gram_matrix(self.__jd[q]) for q in sorted([q for q in self.__jd.keys() if q % p == 0])])
+        n = result.ncols()
+        if p == 2:
+            if (self.signature() + n) % 2 != 0:
+                raise RuntimeError, 'Unable to find a Gram Matrix of a dimension which has the same parity as the signature.'
+            d = self.det().abs() / result.det() * self.kappa_sign() * Integer(-1)**((n+2)*(n+1)/2)
+            d = d.squarefree_part()
+            d = d % 8
+            if d == 7:
+                return matrix(2,2,[0, 1, 1, 0]).block_sum(result)
+            elif d == 3:
+                return matrix(2,2,[2, 1, 1, 2]).block_sum(result)
+            else:
+                raise RuntimeError, 'We do not know what to do in this case yet, maybe it should never occur!'
+        else:
+            if (self.signature() + n) % 2 != 0:
+                result = matrix(1,1,[4]).block_sum(result)
+            n = result.ncols()
+            eps1 = 2 * self.det().abs() / result.det() * self.kappa_sign() * Integer(-1)**((n+2)*(n+1)/2)
+            eps1 = eps1.squarefree_part()
+            return matrix(2,2,[2*eps1, 0, 0, 4]).block_sum(result)
+
+    @cached_method
     def valuation(self,i,p):
         """
         Gets the p-order of the (i,i)-entry in the diagonalized local normal form if p is odd.
@@ -466,25 +515,39 @@ class LocalSpaceByJordanData(SageObject):
     
         EXAMPLES::
 
+            sage: from finite_quadratic_module import FiniteQuadraticModule
             sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
             sage: L.local_normal_form(2)
 
-            [ 0  2| 0]
-            [ 2  0| 0]
-            [-----+--]
-            [ 0  0|12]
+            [ 0  1  0  0  0]
+            [ 1  0  0  0  0]
+            [ 0  0  0  2  0]
+            [ 0  0  2  0  0]
+            [ 0  0  0  0 12]
             sage: L.valuation(0,2)
-            1
+            0
             sage: L.valuation(1,2)
-            1
+            0
             sage: L.valuation(2,2)
+            1
+            sage: L.valuation(3,2)
+            1
+            sage: L.valuation(4,2)
             2
             sage: L.local_normal_form(3)
-            [6]
+
+            [-2  0  0]
+            [ 0  4  0]
+            [ 0  0  6]
             sage: L.valuation(0,3)
+            0
+            sage: L.valuation(1,3)
+            0
+            sage: L.valuation(2,3)
             1
+
         """
         S=self.local_normal_form(p)
         if p==2:
@@ -493,7 +556,8 @@ class LocalSpaceByJordanData(SageObject):
             if i > 0 and S[i, i-1]!=0:
                 return valuation(S[i,i-1], p)
         return valuation(S[i,i],p)
-        
+
+    @cached_method
     def unit(self,i,p):
         """
         Gets the p-adic unit (=u) in the factorization of the (i,i)-entry (=2*u*p**e) in the diagonalized local normal form if p is odd.
@@ -510,24 +574,37 @@ class LocalSpaceByJordanData(SageObject):
     
         EXAMPLES::
 
+            sage: from finite_quadratic_module import FiniteQuadraticModule
             sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
             sage: L.local_normal_form(2)
 
-            [ 0  2| 0]
-            [ 2  0| 0]
-            [-----+--]
-            [ 0  0|12]
+            [ 0  1  0  0  0]
+            [ 1  0  0  0  0]
+            [ 0  0  0  2  0]
+            [ 0  0  2  0  0]
+            [ 0  0  0  0 12]
             sage: L.unit(0,2)
             1
             sage: L.unit(1,2)
             1
             sage: L.unit(2,2)
+            1
+            sage: L.unit(3,2)
+            1
+            sage: L.unit(4,2)
             3
             sage: L.local_normal_form(3)
-            [6]
+
+            [-2  0  0]
+            [ 0  4  0]
+            [ 0  0  6]
             sage: L.unit(0,3)
+            -1
+            sage: L.unit(1,3)
+            2
+            sage: L.unit(2,3)
             1
         """
         S = self.local_normal_form(p)
@@ -554,21 +631,28 @@ class LocalSpaceByJordanData(SageObject):
     
         EXAMPLES::
 
+            sage: from finite_quadratic_module import FiniteQuadraticModule
             sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
             sage: L.local_normal_form(2)
 
-            [ 0  2| 0]
-            [ 2  0| 0]
-            [-----+--]
-            [ 0  0|12]
-            sage: L.local_Q_p((0,0,0),2)
+            [ 0  1  0  0  0]
+            [ 1  0  0  0  0]
+            [ 0  0  0  2  0]
+            [ 0  0  2  0  0]
+            [ 0  0  0  0 12]
+            sage: L.local_Q_p((0,0,0,0,0),2)
             0
-            sage: L.local_Q_p((0,0,1/2),2)
+            sage: L.local_Q_p((0,0,0,0,1/2),2)
             1/2
-            sage: L.local_Q_p((0,0,1/4),2)
+            sage: L.local_Q_p((0,0,0,0,1/4),2)
             3/8
+            sage: L.local_Q_p((0,0,1,1,0),2)
+            0
+            sage: L.local_Q_p((1,1,1,1,1),2)
+            0
+
         """
         v = matrix([element_tuple_p])
         q_value = (v * self.local_normal_form(p) * v.transpose())[0,0] / Integer(2)
@@ -577,6 +661,46 @@ class LocalSpaceByJordanData(SageObject):
         #print v * self.local_normal_form(p) * v.transpose()
         #print q_value
         return q_value - floor(q_value)
+
+    def local_B_p(self, element_tuple_p, other_element_tuple_p, p):
+        """
+        Evaluates the local bilinear form of the p-part of the underlying Jordan decomposition.
+
+        INPUT:
+            `element_tuple_p` -- a tuple
+
+            `other_element_tuple_p` -- a tuple
+        
+            `p` -- a positive prime number
+
+        OUTPUT:
+            a rational number
+    
+        EXAMPLES::
+
+            sage: from finite_quadratic_module import FiniteQuadraticModule
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L.local_normal_form(2)
+
+            [ 0  1  0  0  0]
+            [ 1  0  0  0  0]
+            [ 0  0  0  2  0]
+            [ 0  0  2  0  0]
+            [ 0  0  0  0 12]
+            sage: L.local_B_p((0,0,1/2,0,0),(0,0,0,1/2,0),2)
+            1/2
+
+        """
+        v = matrix([element_tuple_p])
+        other_v = matrix([other_element_tuple_p])
+        b_value = (v * self.local_normal_form(p) * other_v.transpose())[0,0]
+        #print v
+        #print self.local_normal_form(p)
+        #print v * self.local_normal_form(p) * v.transpose()
+        #print q_value
+        return b_value - floor(b_value)
             
     def Q(self, element_dict_by_p):
         """
@@ -591,35 +715,93 @@ class LocalSpaceByJordanData(SageObject):
     
         EXAMPLES::
 
+            sage: from finite_quadratic_module import FiniteQuadraticModule
             sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
             sage: L.local_normal_form(2)
 
-            [ 0  2| 0]
-            [ 2  0| 0]
-            [-----+--]
-            [ 0  0|12]
+            [ 0  1  0  0  0]
+            [ 1  0  0  0  0]
+            [ 0  0  0  2  0]
+            [ 0  0  2  0  0]
+            [ 0  0  0  0 12]
             sage: L.local_normal_form(3)
-            [6]
-            sage: L.Q({2 : (0,0,0), 3: (0)})
+
+            [-2  0  0]
+            [ 0  4  0]
+            [ 0  0  6]
+            sage: L.Q({2 : (0,0,0,0,0), 3 : (0,0,0)})
             0
-            sage: L.Q({2 : (0,0,0), 3: (1/3)})
+            sage: L.Q({2 : (0,0,0,0,0), 3 : (0,0,1/3)})
             1/3
-            sage: L.Q({2 : (0,0,0), 3: (2/3)})
+            sage: L.Q({2 : (0,0,0,0,0), 3 : (0,0,2/3)})
             1/3
-            sage: L.Q({2 : (1/2,0,0), 3: (0)})
+            sage: L.Q({2 : (0,0,1/2,0,0), 3 : (0,0,0)})
             0
-            sage: L.Q({2 : (1/2,1/2,0), 3: (0)})
+            sage: L.Q({2 : (0,0,1/2,1/2,0), 3 : (0,0,0)})
             1/2
-            sage: L.Q({2 : (1/2,1/2,0), 3: (1/3)})
+            sage: L.Q({2 : (0,0,1/2,1/2,0), 3 : (0,0,1/3)})
             5/6
-            sage: L.Q({2 : (1/2,1/2,1/2), 3: (1/3)})
+            sage: L.Q({2 : (0,0,1/2,1/2,1/2), 3 : (0,0,1/3)})
             1/3
+
         """
-        q_value = sum(self.local_Q_p(element_dict_by_p[p], p) for p in element_dict_by_p.keys())
+        q_value = sum(self.local_Q_p(element_dict_by_p[p], p) for p in self.primes())
         return q_value - floor(q_value)
 
+    def B(self, element_dict_by_p, other_element_dict_by_p):
+        """
+        Evaluates the bilinear form (defined mod 1) form on elements of the underlying Jordan decomposition.
+        The elements are expected to be a dictionary with prime keys.
+
+        INPUT:
+            `element_dict_by_p` -- a dictionary with prime keys and tuple values {p : tuple}
+
+            `other_element_dict_by_p` -- a dictionary with prime keys and tuple values {p : tuple}
+
+        OUTPUT:
+            a rational number in [0,1)
+    
+        EXAMPLES::
+
+            sage: from finite_quadratic_module import FiniteQuadraticModule
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L.local_normal_form(2)
+
+            [ 0  1  0  0  0]
+            [ 1  0  0  0  0]
+            [ 0  0  0  2  0]
+            [ 0  0  2  0  0]
+            [ 0  0  0  0 12]
+            sage: L.local_normal_form(3)
+
+            [-2  0  0]
+            [ 0  4  0]
+            [ 0  0  6]
+            sage: el0 = {2 : (0,0,0,0,0), 3 : (0,0,0)}
+            sage: el1 = {2 : (0,0,0,0,0), 3 : (0,0,1/3)}
+            sage: el2 = {2 : (0,0,1/2,1/2,0), 3 : (0,0,0)}
+            sage: L.B(el0,el0)
+            0
+            sage: L.B(el0,el1)
+            0
+            sage: L.B(el0,el2)
+            0
+            sage: L.B(el1,el1)
+            2/3
+            sage: L.B(el1,el2)
+            0
+            sage: L.B(el2,el2)
+            0
+        
+        """
+        b_value = sum(self.local_B_p(element_dict_by_p[p], other_element_dict_by_p[p], p) for p in self.primes())
+        return b_value - floor(b_value)
+
+    @cached_method
     def group_structure(self, p):
         """
         Returns the group sturcture of the p-part of the underlying Jordan decomposition
@@ -632,27 +814,38 @@ class LocalSpaceByJordanData(SageObject):
     
         EXAMPLES::
 
+            sage: from finite_quadratic_module import FiniteQuadraticModule
             sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
             sage: L.local_normal_form(2)
 
-            [ 0  2| 0]
-            [ 2  0| 0]
-            [-----+--]
-            [ 0  0|12]
+            [ 0  1  0  0  0]
+            [ 1  0  0  0  0]
+            [ 0  0  0  2  0]
+            [ 0  0  2  0  0]
+            [ 0  0  0  0 12]
             sage: L.local_normal_form(3)
-            [6]
+
+            [-2  0  0]
+            [ 0  4  0]
+            [ 0  0  6]
             sage: L.group_structure(2)
-            [2, 2, 4]
+            [1, 1, 2, 2, 4]
             sage: L.group_structure(3)
-            [3]
+            [1, 1, 3]
+
         """
         result = []
         for q in sorted([q for q in self.__jd.keys() if q % p == 0]):
             result += self.__jd[q][2] * [q]
+        if (self.signature() + len(result)) % 2 != 0:
+            result = 3 *[Integer(1)] + result
+        else:
+            result = 2 *[Integer(1)] + result
         return result
 
+    @cached_method
     def sort_2_adic(self):
         """
         Returns a list containing three lists. 
@@ -664,17 +857,22 @@ class LocalSpaceByJordanData(SageObject):
         
         EXAMPLES::
 
-            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
+            sage: from finite_quadratic_module import FiniteQuadraticModule
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.8^-2.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
             sage: L.local_normal_form(2)
 
-            [ 0  2| 0]
-            [ 2  0| 0]
-            [-----+--]
-            [ 0  0|12]
+            [ 2  1  0  0  0  0  0]
+            [ 1  2  0  0  0  0  0]
+            [ 0  0  0  2  0  0  0]
+            [ 0  0  2  0  0  0  0]
+            [ 0  0  0  0 12  0  0]
+            [ 0  0  0  0  0 16  8]
+            [ 0  0  0  0  0  8 16]
             sage: L.sort_2_adic()
-            [[2], [0, 1], []]
+            [[4], [2, 3], [0, 1, 5, 6]]
+
         """
         Q_loc = self.local_normal_form(2)
         n = Q_loc.ncols()
@@ -693,23 +891,25 @@ class LocalSpaceByJordanData(SageObject):
         
         EXAMPLES::
 
+            sage: from finite_quadratic_module import FiniteQuadraticModule
             sage: F = FiniteQuadraticModule('4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
             sage: sorted([[(p, el._mu_p(p)) for p in L.primes()] for el in L.discriminant_form_iterator()])
 
-            [[(2, (0,)), (3, (0,))],
-             [(2, (0,)), (3, (1/3,))],
-             [(2, (0,)), (3, (2/3,))],
-             [(2, (1/4,)), (3, (0,))],
-             [(2, (1/4,)), (3, (1/3,))],
-             [(2, (1/4,)), (3, (2/3,))],
-             [(2, (1/2,)), (3, (0,))],
-             [(2, (1/2,)), (3, (1/3,))],
-             [(2, (1/2,)), (3, (2/3,))],
-             [(2, (3/4,)), (3, (0,))],
-             [(2, (3/4,)), (3, (1/3,))],
-             [(2, (3/4,)), (3, (2/3,))]]
+            [[(2, (0, 0, 0)), (3, (0, 0, 0))],
+             [(2, (0, 0, 0)), (3, (0, 0, 1/3))],
+             [(2, (0, 0, 0)), (3, (0, 0, 2/3))],
+             [(2, (0, 0, 1/4)), (3, (0, 0, 0))],
+             [(2, (0, 0, 1/4)), (3, (0, 0, 1/3))],
+             [(2, (0, 0, 1/4)), (3, (0, 0, 2/3))],
+             [(2, (0, 0, 1/2)), (3, (0, 0, 0))],
+             [(2, (0, 0, 1/2)), (3, (0, 0, 1/3))],
+             [(2, (0, 0, 1/2)), (3, (0, 0, 2/3))],
+             [(2, (0, 0, 3/4)), (3, (0, 0, 0))],
+             [(2, (0, 0, 3/4)), (3, (0, 0, 1/3))],
+             [(2, (0, 0, 3/4)), (3, (0, 0, 2/3))]]
+
         """
         S = self.primes()
         d_p = [self.group_structure(p) for p in S]
@@ -718,6 +918,39 @@ class LocalSpaceByJordanData(SageObject):
         it3 = itertools.imap(lambda x: LocalSpaceByJordanDataElement(self, x), it2)
         return it3
 
+    def discriminant_form_reduced(self):
+        """
+        Returns a list of the elements modulo {-1,+1} in the underlying Jordan decomposition.
+
+        OUTPUT:
+            list
+        
+        EXAMPLES::
+
+            sage: from finite_quadratic_module import FiniteQuadraticModule
+            sage: F = FiniteQuadraticModule('4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: sorted([[(p, el._mu_p(p)) for p in L.primes()] for el in L.discriminant_form_reduced()])
+
+            [[(2, (0, 0, 0)), (3, (0, 0, 0))],
+             [(2, (0, 0, 0)), (3, (0, 0, 1/3))],
+             [(2, (0, 0, 1/4)), (3, (0, 0, 0))],
+             [(2, (0, 0, 1/4)), (3, (0, 0, 1/3))],
+             [(2, (0, 0, 1/4)), (3, (0, 0, 2/3))],
+             [(2, (0, 0, 1/2)), (3, (0, 0, 0))],
+             [(2, (0, 0, 1/2)), (3, (0, 0, 1/3))]]
+
+        """
+        old_elts = []
+        result = []
+        for el in self.discriminant_form_iterator():
+            if el in old_elts or -el in old_elts:
+                continue
+            old_elts += [el]
+            result += [el]
+        return result        
+        
     def discriminant_form_iterator_p(self, p):
         """
         Returns an iterator for representatives of p-part of the underlying Jordan decomposition.
@@ -731,17 +964,21 @@ class LocalSpaceByJordanData(SageObject):
         
         EXAMPLES::
 
+            sage: from finite_quadratic_module import FiniteQuadraticModule
             sage: F = FiniteQuadraticModule('4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
             sage: sorted([[(p, el._mu_p(p)) for p in L.primes()] for el in L.discriminant_form_iterator_p(2)])
 
-            [[(2, (0,)), (3, (0,))],
-             [(2, (1/4,)), (3, (0,))],
-             [(2, (1/2,)), (3, (0,))],
-             [(2, (3/4,)), (3, (0,))]]
+            [[(2, (0, 0, 0)), (3, (0, 0, 0))],
+             [(2, (0, 0, 1/4)), (3, (0, 0, 0))],
+             [(2, (0, 0, 1/2)), (3, (0, 0, 0))],
+             [(2, (0, 0, 3/4)), (3, (0, 0, 0))]]
             sage: sorted([[(p, el._mu_p(p)) for p in L.primes()] for el in L.discriminant_form_iterator_p(3)])
-            [[(2, (0,)), (3, (0,))], [(2, (0,)), (3, (1/3,))], [(2, (0,)), (3, (2/3,))]]
+
+            [[(2, (0, 0, 0)), (3, (0, 0, 0))],
+             [(2, (0, 0, 0)), (3, (0, 0, 1/3))],
+             [(2, (0, 0, 0)), (3, (0, 0, 2/3))]]
 
         """
         S = self.primes()
@@ -753,6 +990,88 @@ class LocalSpaceByJordanData(SageObject):
         it2 = itertools.imap(lambda x: {S[k] : tuple([x[k][j]/d_p[k][j] for j in range(len(d_p[k]))]) for k in range(len(S))}, it1)
         it3 = itertools.imap(lambda x: LocalSpaceByJordanDataElement(self, x), it2)
         return it3
+
+    def eisenstein_series(self, weight, prec = 10):
+        """
+        Return the vector valued Eisenstein series of weight `l` for the underlying finite quadratic module and the Weil representation.
+
+        INPUT:
+            `l` -- a half integer, the weight of the Eisenstein series
+
+            `prec` -- the precision to which the Eisenstein series will be computed (default: 10)
+
+        OUTPUT:
+            a dicionary of dictionaries
+        
+        EXAMPLES::
+      
+            sage: from finite_quadratic_module import FiniteQuadraticModule
+            sage: F = FiniteQuadraticModule(matrix(2,2,[0,1,1,0]))
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: el = LocalSpaceByJordanDataElement(L, {})
+            sage: el.eisenstein_series(4, prec = 10)
+
+            {0: 1,
+             1: 240,
+             2: 2160,
+             3: 6720,
+             4: 17520,
+             5: 30240,
+             6: 60480,
+             7: 82560,
+             8: 140400,
+             9: 181680}
+
+            sage: F = FiniteQuadraticModule(matrix(2,2,[2,1,1,2]))
+            sage: J = F.jordan_decomposition()
+            sage: J.genus_symbol()
+            '3^-1'
+            sage: F = FiniteQuadraticModule('3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L.eisenstein_series(5, prec = 10)
+
+            {((3, (0, 0, 0, 0)),): {0: 1,
+              1: 246,
+              2: 3600,
+              3: 19686,
+              4: 59286,
+              5: 149760,
+              6: 295200,
+              7: 590892,
+              8: 925200,
+              9: 1594326},
+             ((3, (0, 0, 0, 1/3)),): {1/3: 3,
+              4/3: 723,
+              7/3: 7206,
+              10/3: 28080,
+              13/3: 85686,
+              16/3: 185043,
+              19/3: 390966,
+              22/3: 658800,
+              25/3: 1170003,
+              28/3: 1736646},
+             ((3, (0, 0, 0, 2/3)),): {1/3: 3,
+              4/3: 723,
+              7/3: 7206,
+              10/3: 28080,
+              13/3: 85686,
+              16/3: 185043,
+              19/3: 390966,
+              22/3: 658800,
+              25/3: 1170003,
+              28/3: 1736646}}
+
+        """
+        return {el.tuple() : el.eisenstein_series(weight, prec=prec) for el in self.discriminant_form_iterator()}
+
+    def small_coefficients(self, n, N):
+        """
+        The coefficients of the Eisenstein series which are small enough with
+        respect to the search of Borcherds products of singular weight.
+        """
+        return {el.tuple() : el.small_coefficients(n, N) for el in self.discriminant_form_iterator()}
 
     def orbit_representatives_and_lengths(self, p):
         """
@@ -773,7 +1092,9 @@ class LocalSpaceByJordanData(SageObject):
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
             sage: L.orbit_representatives_and_lengths(3)
-            {(1,): [{2: (0,), 3: (0,)}, 1], (3, 1, 1/3): [{2: (0,), 3: (1/3,)}, 2]}
+
+            {(1,): [{2: (0, 0, 0), 3: (0, 0, 0)}, 1],
+             (3, 1, 1/3): [{2: (0, 0, 0), 3: (0, 0, 1/3)}, 2]}
 
         """
         assert p > 2
@@ -805,11 +1126,79 @@ class LocalSpaceByJordanData(SageObject):
         
         EXAMPLES::
 
-            sage: F = FiniteQuadraticModule('4_3^-1.3^-1')
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1.9^1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L.whittaker_representatives_and_lengths(2)
+
+            {(): [{2: (0, 0, 0, 0, 0), 3: (0, 0, 0, 0, 0)}, 1],
+             ((1, (2, (0, 1), (1, 1))),): [{2: (0, 0, 0, 1/2, 1/2), 3: (0, 0, 0, 0, 0)},
+              3],
+             ((1, (2, (1/2, 1), (3/2, 1))),): [{2: (0, 0, 0, 1/2, 0), 3: (0, 0, 0, 0, 0)},
+              3],
+             ((1,
+               (2,
+                (1/2, -1/2*X + 1),
+                (3/2, 1/4*X^2 + 1/2*X + 1),
+                (5/2, -1/2*X + 1),
+                (7/2,
+                 -1/4*X^2 + 1/2*X + 1))),): [{2: (0, 0, 0, 0, 1/2), 3: (0, 0, 0, 0, 0)},
+              1],
+             ((1, (4, (3/8, 1), (11/8, 1))),
+              (2,
+               (2,
+                (1/2, -1/2*X + 1),
+                (3/2, 1/4*X^2 + 1/2*X + 1),
+                (5/2, -1/2*X + 1),
+                (7/2,
+                 -1/4*X^2 + 1/2*X + 1)))): [{2: (0, 0, 0, 1/2, 1/4), 3: (0, 0, 0, 0, 0)},
+              6],
+             ((1, (4, (7/8, 1), (15/8, 1))),
+              (2,
+               (2,
+                (1/2, -1/2*X + 1),
+                (3/2, 1/4*X^2 + 1/2*X + 1),
+                (5/2, -1/2*X + 1),
+                (7/2,
+                 -1/4*X^2 + 1/2*X + 1)))): [{2: (0, 0, 0, 0, 1/4), 3: (0, 0, 0, 0, 0)},
+              2]}
             sage: L.whittaker_representatives_and_lengths(3)
-            {(): [{2: (0,), 3: (0,)}, 1], ((1, (3, (1/3, 1))),): [{2: (0,), 3: (1/3,)}, 2]}
+
+            {(): [{2: (0, 0, 0, 0, 0), 3: (0, 0, 0, 0, 0)}, 1],
+             ((1,
+               (3,
+                (0, -1/3*X + 1),
+                (1, 1/3*X + 1),
+                (2, 1))),): [{2: (0, 0, 0, 0, 0), 3: (0, 0, 0, 0, 1/3)},
+              2],
+             ((1, (3, (1/3, 1))),): [{2: (0, 0, 0, 0, 0), 3: (0, 0, 0, 1/3, 0)}, 6],
+             ((1, (9, (2/9, 1))),
+              (3,
+               (3,
+                (0, -1/3*X + 1),
+                (1, 1/3*X + 1),
+                (2, 1)))): [{2: (0, 0, 0, 0, 0), 3: (0, 0, 0, 0, 1/9)}, 6],
+             ((1, (9, (5/9, 1))),
+              (3,
+               (3,
+                (0, -1/3*X + 1),
+                (1, 1/3*X + 1),
+                (2, 1)))): [{2: (0, 0, 0, 0, 0), 3: (0, 0, 0, 0, 4/9)}, 6],
+             ((1, (9, (8/9, 1))),
+              (3,
+               (3,
+                (0, -1/3*X + 1),
+                (1, 1/3*X + 1),
+                (2, 1)))): [{2: (0, 0, 0, 0, 0), 3: (0, 0, 0, 0, 2/9)}, 6]}
+            sage: L.orbit_representatives_and_lengths(3)
+
+            {(1,): [{2: (0, 0, 0, 0, 0), 3: (0, 0, 0, 0, 0)}, 1],
+             (3, 1, 1/3): [{2: (0, 0, 0, 0, 0), 3: (0, 0, 0, 1/3, 0)}, 6],
+             (3, 3, 2/3): [{2: (0, 0, 0, 0, 0), 3: (0, 0, 0, 0, 1/3)}, 2],
+             (9, 1, 1, 2/9, 2/3): [{2: (0, 0, 0, 0, 0), 3: (0, 0, 0, 0, 1/9)}, 6],
+             (9, 1, 1, 5/9, 2/3): [{2: (0, 0, 0, 0, 0), 3: (0, 0, 0, 0, 4/9)}, 6],
+             (9, 1, 1, 8/9, 2/3): [{2: (0, 0, 0, 0, 0), 3: (0, 0, 0, 0, 2/9)}, 6]}
+
         """
         #assert p > 2
         result = {}
@@ -823,6 +1212,19 @@ class LocalSpaceByJordanData(SageObject):
                 result[o] = [el, 1]
         return result
 
+#    def whittaker_orbit_lengths(self):
+#        S = self.primes()
+#        p_orbs = {p : self.whittaker_representatives_and_lengths(p) for p in S}
+#        result = []
+#        for orbs in itertools.product(*[p_orbs[p].keys() for p in S]):
+#            #print orbs
+#            #for j in range(len(S)):
+#            #    print S[j]
+#            #    print p_orbs[S[j]]
+#            #    print p_orbs[S[j]][orbs[j]]
+#            #    print p_orbs[S[j]][orbs[j]][1]
+#            result += [prod([p_orbs[S[j]][orbs[j]][1] for j in range(len(S))])]
+#        return result
                 
 class LocalSpaceByJordanDataElement(SageObject):
     r"""
@@ -841,24 +1243,28 @@ class LocalSpaceByJordanDataElement(SageObject):
     EXAMPLES::
 
         sage: from finite_quadratic_module import FiniteQuadraticModule
-        sage: F = FiniteQuadraticModule(matrix(2,2,[0,1,1,0]))
+        sage: F = FiniteQuadraticModule('4_3^-1.3^-1')
         sage: J = F.jordan_decomposition()
         sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
-        sage: el = LocalSpaceByJordanDataElement(L, {})
+        sage: L.group_structure(2)
+        [1, 1, 4]
+        sage: L.group_structure(3)
+        [1, 1, 3]
+        sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/4), 3 : (0,0,1/3)})
         sage: el
-        {}
-        sage: el.eisenstein_series(4, prec = 10)
-    
-        {0: 1,
-         1: 240,
-         2: 2160,
-         3: 6720,
-         4: 17520,
-         5: 30240,
-         6: 60480,
-         7: 82560,
-         8: 140400,
-         9: 181680}
+        {2: (0, 0, 1/4), 3: (0, 0, 1/3)}
+        sage: el.eisenstein_series(5/2, prec = 10)
+
+        {17/24: 12,
+         41/24: 48,
+         65/24: 96,
+         89/24: 156,
+         113/24: 216,
+         137/24: 288,
+         161/24: 384,
+         185/24: 456,
+         209/24: 564,
+         233/24: 636}
 
     """
     def __init__(self, parent, entries_as_dict_by_p):
@@ -874,7 +1280,32 @@ class LocalSpaceByJordanDataElement(SageObject):
             return all(all(j == 0 for j in self._entries[q]) for q in self._entries.keys())
         if not isinstance(other,type(self)):
             return False
-        return self._parent == other._parent and self._entries == other._entries        
+        return self._parent == other._parent and self._entries == other._entries
+
+    @cached_method
+    def tuple(self):
+        """
+        Returns a tuple representation of the entries.
+        
+        OUTPUT:
+
+            tuple
+        
+        EXAMPLES::
+
+            sage: from finite_quadratic_module import FiniteQuadraticModule
+            sage: F = FiniteQuadraticModule('4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/4), 3 : (0,0,1/3)})
+            sage: el.tuple()
+            ((2, (0, 0, 1/4)), (3, (0, 0, 1/3)))
+
+        """
+        return tuple((p, tuple(self._entries[p])) for p in sorted(self._entries.keys()))
+
+    def _cache_key(self):
+        return self.tuple()
 
     def scale(self, p, fac):
         """
@@ -892,26 +1323,52 @@ class LocalSpaceByJordanDataElement(SageObject):
             sage: F = FiniteQuadraticModule('4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (1/4,), 3 : (1/3,)})
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/4), 3 : (0,0,1/3)})
             sage: el
-            {2: (1/4,), 3: (1/3,)}
+            {2: (0, 0, 1/4), 3: (0, 0, 1/3)}
             sage: el.scale(2,2)
-            {2: (1/2,), 3: (1/3,)}
+            {2: (0, 0, 1/2), 3: (0, 0, 1/3)}
             sage: el
-            {2: (1/4,), 3: (1/3,)}
+            {2: (0, 0, 1/4), 3: (0, 0, 1/3)}
             sage: el.scale(2,1/2)
-            {2: (1/8,), 3: (1/3,)}
+            {2: (0, 0, 1/8), 3: (0, 0, 1/3)}
+
         """
         entries = {p : tuple(self._entries[p]) for p in self._entries.keys()}
-        entries[p] = tuple([fac * j for j in self._entries[p]])
+        entries[p] = tuple([frac(fac * j) for j in self._entries[p]])
         return LocalSpaceByJordanDataElement(self._parent, entries)
         
+    def _neg_(self):
+        return -1 * self
+
+    def _add_(self, other):
+        entries = {}
+        for p in self._entries.keys():
+            entries[p] = tuple([frac(other._entries[p][j] + self._entries[p][j]) for j in range(len(self._entries[p]))])
+        return LocalSpaceByJordanDataElement(self._parent, entries)
+
+    def __sub__(self, other):
+        return self._add_(-1 * other)
+        
+    def __lmul__(self, other):
+        entries = {p : tuple(self._entries[p]) for p in self._entries.keys()}
+        for p in self._entries.keys():
+            entries[p] = tuple([frac(other * j) for j in self._entries[p]])
+        return LocalSpaceByJordanDataElement(self._parent, entries)
+
+    def __rmul__(self, other):
+        return self.__lmul__(other)
+
+    def __neg__(self):
+        return self._neg_()
+    
     def integral_parent(self):
         """
         Returns the LocalSpaceByJordanData with respect to which self is defined.
         """
         return self._parent
 
+    @cached_method
     def Q(self):
         """
         Returns the quadratic form of self (which is defined mod 1).
@@ -926,27 +1383,26 @@ class LocalSpaceByJordanDataElement(SageObject):
             sage: F = FiniteQuadraticModule('4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,), 3 : (0,)})
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0), 3 : (0,0,0)})
             sage: el.Q()
             0
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (1,), 3 : (0,)})
-            sage: el.Q()
-            0
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (1/2,), 3 : (0,)})
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/2), 3 : (0,0,0)})
             sage: el.Q()
             1/2
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,), 3 : (1/3,)})
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0), 3 : (0,0,1/3)})
             sage: el.Q()
             1/3
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (1/2,), 3 : (1/3,)})
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/2), 3 : (0,0,1/3)})
             sage: el.Q()
             5/6
+
         """
         return self.integral_parent().Q(self._entries)
 
-    def local_Q_p(self, p):
+    @cached_method
+    def B(self, other):
         """
-        Returns the local quadratic form of the p-part of  self (which is defined mod 1).
+        Evaluates the bilinear form (which is defined mod 1) on self and other.
 
         OUTPUT:
 
@@ -958,16 +1414,59 @@ class LocalSpaceByJordanDataElement(SageObject):
             sage: F = FiniteQuadraticModule('4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,), 3 : (0,)})
+            sage: el0 = LocalSpaceByJordanDataElement(L, {2 : (0,0,0), 3 : (0,0,0)})
+            sage: el1 = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/2), 3 : (0,0,0)})
+            sage: el2 = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/4), 3 : (0,0,0)})
+            sage: el3 = LocalSpaceByJordanDataElement(L, {2 : (0,0,0), 3 : (0,0,1/3)})
+            sage: el0.B(el0)
+            0
+            sage: el0.B(el1)
+            0
+            sage: el0.B(el2)
+            0
+            sage: el0.B(el3)
+            0
+            sage: el1.B(el1)
+            0
+            sage: el1.B(el2)
+            1/2
+            sage: el1.B(el3)
+            0
+            sage: el2.B(el2)
+            3/4
+            sage: el2.B(el3)
+            0
+            sage: el3.B(el3)
+            2/3
+
+        """
+        return self.integral_parent().B(self._entries, other._entries)
+
+    def local_Q_p(self, p):
+        """
+        Returns the local quadratic form of the p-part of self (which is defined mod 1).
+
+        OUTPUT:
+
+            a rational
+        
+        EXAMPLES::
+
+            sage: from finite_quadratic_module import FiniteQuadraticModule
+            sage: F = FiniteQuadraticModule('4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0), 3 : (0,0,0)})
             sage: el.local_Q_p(2)
             0
             sage: el.local_Q_p(3)
             0
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (1/2,), 3 : (1/3,)})
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/4), 3 : (0,0,1/3)})
             sage: el.local_Q_p(2)
-            1/2
+            3/8
             sage: el.local_Q_p(3)
             1/3
+
         """
         return self.integral_parent().local_Q_p(self._entries[p], p)
 
@@ -985,21 +1484,19 @@ class LocalSpaceByJordanDataElement(SageObject):
             sage: F = FiniteQuadraticModule('4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,), 3 : (0,)})
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0), 3 : (0,0,0)})
             sage: el.norm()
             0
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (1,), 3 : (0,)})
-            sage: el.norm()
-            0
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (1/2,), 3 : (0,)})
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/2), 3 : (0,0,0)})
             sage: el.norm()
             1/2
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,), 3 : (1/3,)})
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0), 3 : (0,0,1/3)})
             sage: el.norm()
             1/3
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (1/2,), 3 : (1/3,)})
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/2), 3 : (0,0,1/3)})
             sage: el.norm()
             5/6
+
         """
         return self.Q()
 
@@ -1017,23 +1514,25 @@ class LocalSpaceByJordanDataElement(SageObject):
             sage: F = FiniteQuadraticModule('4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/4), 3 : (0,0,1/3)})
             sage: el.order_p(2)
             4
             sage: el.order_p(3)
             3
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (1/2,), 3 : (2/3,)})
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/2), 3 : (0,0,0)})
             sage: el.order_p(2)
             2
             sage: el.order_p(3)
-            3
+            1
+
         """
         return max(j.denominator() for j in self._mu_p(p))
 
+    @cached_method
     def multiplicity_reduced_norm_p(self, p, k, allow_2 = False):
         """
         Returns the multiplicity and reduced norm of the p-part of p**k * self.
-        (For odd p, these values are invariants w.r.t. the action of the orthogonal group of the underlying finite quadratic module.)
-        
+        (For odd p, these values are invariants w.r.t. the action of the orthogonal group of the underlying finite quadratic module.)        
 
         INPUT:
             `p` - a prime
@@ -1050,7 +1549,9 @@ class LocalSpaceByJordanDataElement(SageObject):
             sage: F = FiniteQuadraticModule('3^1.9^-1.27^1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
-            sage: el = LocalSpaceByJordanDataElement(L, {3 : (1/3,0,1/9)})
+            sage: L.group_structure(3)
+            [1, 1, 1, 3, 9, 27]
+            sage: el = LocalSpaceByJordanDataElement(L, {3 : (0,0,0,1/3,0,1/9)})
             sage: el.multiplicity_reduced_norm_p(3,0)
             (1, 1/3)
             sage: el.multiplicity_reduced_norm_p(3,1)
@@ -1069,13 +1570,12 @@ class LocalSpaceByJordanDataElement(SageObject):
         q_red -= floor(q_red)
         #print self, p, k, p**k, image_pk, m, preimage, q_red
         return m, q_red
-        
+
     def multiplicity_p(self, p, k = 0):
         """
         Returns the multiplicity of p**k * self.
         (For odd p, these values are invariants w.r.t. the action of the orthogonal group of the underlying finite quadratic module.)
         
-
         INPUT:
             `p` - a prime
 
@@ -1091,14 +1591,15 @@ class LocalSpaceByJordanDataElement(SageObject):
             sage: F = FiniteQuadraticModule('3^1.9^-1.27^1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
-            sage: el = LocalSpaceByJordanDataElement(L, {3 : (1/3,0,1/9)})
+            sage: el = LocalSpaceByJordanDataElement(L, {3 : (0,0,0,1/3,0,1/9)})
             sage: el.multiplicity_p(3,0)
             1
             sage: el.multiplicity_p(3,1)
             3
+
         """
         return self.multiplicity_reduced_norm_p(p, k, allow_2 = True)[0]
-        
+
     def reduced_norm_p(self, p, k = 0):
         """
         Returns the reduced norm of p**k * self (not well defined for p=2).
@@ -1120,11 +1621,12 @@ class LocalSpaceByJordanDataElement(SageObject):
             sage: F = FiniteQuadraticModule('3^1.9^-1.27^1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
-            sage: el = LocalSpaceByJordanDataElement(L, {3 : (1/3,0,1/9)})
+            sage: el = LocalSpaceByJordanDataElement(L, {3 : (0,0,0,1/3,0,1/9)})
             sage: el.reduced_norm_p(3,0)
             1/3
             sage: el.reduced_norm_p(3,1)
             2/3
+
         """
         return self.multiplicity_reduced_norm_p(p, k, allow_2 = False)[1]        
 
@@ -1143,12 +1645,14 @@ class LocalSpaceByJordanDataElement(SageObject):
         
         EXAMPLES::
 
-            sage: F = FiniteQuadraticModule('4_3^-1.3^-1')
+            sage: from finite_quadratic_module import FiniteQuadraticModule
+            sage: F = FiniteQuadraticModule('3^1.9^-1.27^1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
-            sage: el = LocalSpaceByJordanDataElement(L, {3 : (1/3,0,1/9)})
+            sage: el = LocalSpaceByJordanDataElement(L, {3 : (0,0,0,1/3,0,1/9)})
             sage: el.orbit_p(3)
             (9, 1, 3, 1/3, 2/3)
+
         """
         assert p > 2
         maxk = self.order_p(p).valuation(p)
@@ -1157,14 +1661,15 @@ class LocalSpaceByJordanDataElement(SageObject):
         orb += [self.reduced_norm_p(p, k) for k in range(maxk)]
         orb = tuple(orb)
         return orb
-        
+
+    @cached_method
     def order(self):
         """
         Returns the order of self as a group element in the underlying finite quadratic module.
 
         OUTPUT:
 
-            dictionary
+            integer
         
         EXAMPLES::
 
@@ -1179,12 +1684,14 @@ class LocalSpaceByJordanDataElement(SageObject):
             sage: F = FiniteQuadraticModule('4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (1/4,), 3 : (1/3,)})
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/4), 3 : (0,0,1/3)})
             sage: el.order()
             12
+
         """
         return prod(self.order_p(p) for p in self.integral_parent().primes())
-        
+
+    @cached_method
     def _mu_p(self, p):
         """
         Returns the local coordinates in the p-part of the Jordan decomposition
@@ -1202,13 +1709,17 @@ class LocalSpaceByJordanDataElement(SageObject):
             sage: F = FiniteQuadraticModule('4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (1/4,), 3 : (1/3,)})
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/4), 3 : (0,0,1/3)})
             sage: el._mu_p(2)
-            (1/4,)
+            (0, 0, 1/4)
             sage: el._mu_p(3)
-            (1/3,)
+            (0, 0, 1/3)
+
         """
-        return self._entries[p]
+        if p in self.integral_parent().primes():
+            return self._entries[p]
+        else:
+            return tuple([0 for j in range(self.integral_parent().local_normal_form(p).ncols())])
 
     def _mu_p_i(self, p, i):
         """
@@ -1226,21 +1737,27 @@ class LocalSpaceByJordanDataElement(SageObject):
         EXAMPLES::
 
             sage: from finite_quadratic_module import FiniteQuadraticModule
-            sage: F = FiniteQuadraticModule('3^1.9^-1.27^1')
+            sage: F = FiniteQuadraticModule('4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
-            sage: el = LocalSpaceByJordanDataElement(L, {3 : (1/3,0,1/9)})
-            sage: el._mu_p(3)
-            (1/3, 0, 1/9)
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/4), 3 : (0,0,1/3)})
             sage: el._mu_p_i(3,0)
-            1/3
+            0
             sage: el._mu_p_i(3,1)
             0
             sage: el._mu_p_i(3,2)
-            1/9
+            1/3
+            sage: el._mu_p_i(2,0)
+            0
+            sage: el._mu_p_i(2,1)
+            0
+            sage: el._mu_p_i(2,2)
+            1/4
+
         """
         return self._entries[p][i]
 
+    @cached_method
     def H(self, p):
         """
         An invariant from [Kudla, Yang - Eisenstein Series for SL(2)].
@@ -1259,14 +1776,25 @@ class LocalSpaceByJordanDataElement(SageObject):
 
         EXAMPLES::
 
+            sage: from finite_quadratic_module import FiniteQuadraticModule
             sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0), 3 : (0,)})
+            sage: L.group_structure(2)
+            [1, 1, 2, 2, 4]
+            sage: L.group_structure(3)
+            [1, 1, 3]
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0,0,0), 3 : (0,0,0)})
             sage: el.H(2)
-            {'H': [2], 'M': [0], 'N': []}
+            {'H': [4], 'M': [0, 2], 'N': []}
             sage: el.H(3)
-            [0]
+            [0, 1, 2]
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/2,1/2,1/4), 3 : (0,0,1/3)})
+            sage: el.H(2)
+            {'H': [], 'M': [0], 'N': []}
+            sage: el.H(3)
+            [0, 1]
+
         """
         if p==2:
             [odds, even_I, even_II] = self.integral_parent().sort_2_adic()
@@ -1276,7 +1804,8 @@ class LocalSpaceByJordanDataElement(SageObject):
             return {'H':Hs, 'M':Ms, 'N':Ns}
         else:
             return [i for i in range(len(self._mu_p(p))) if self._mu_p_i(p, i).valuation(p) >= 0]
-        
+
+    @cached_method
     def L(self, k, p):
         """
         An invariant from [Kudla, Yang - Eisenstein Series for SL(2)].
@@ -1298,7 +1827,7 @@ class LocalSpaceByJordanDataElement(SageObject):
             sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0), 3 : (0,)})
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0,0,0), 3 : (0,0,0)})
             sage: el.L(0,2)
             []
             sage: el.L(1,2)
@@ -1306,23 +1835,24 @@ class LocalSpaceByJordanDataElement(SageObject):
             sage: el.L(2,2)
             []
             sage: el.L(3,2)
-            [2]
+            [4]
             sage: el.L(4,2)
             []
             sage: el.L(5,2)
-            [2]
+            [4]
             sage: el.L(0,3)
             []
             sage: el.L(1,3)
-            []
+            [0, 1]
             sage: el.L(2,3)
-            [0]
+            [2]
             sage: el.L(3,3)
-            []
+            [0, 1]
             sage: el.L(4,3)
-            [0]
+            [2]
             sage: el.L(5,3)
-            []
+            [0, 1]
+
         """
         if p==2:
             return [i for i in self.H(p)['H']
@@ -1351,7 +1881,7 @@ class LocalSpaceByJordanDataElement(SageObject):
             sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0), 3 : (0,)})
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0,0,0), 3 : (0,0,0)})
             sage: el.l(0,2)
             0
             sage: el.l(1,2)
@@ -1367,18 +1897,20 @@ class LocalSpaceByJordanDataElement(SageObject):
             sage: el.l(0,3)
             0
             sage: el.l(1,3)
-            0
+            2
             sage: el.l(2,3)
             1
             sage: el.l(3,3)
-            0
+            2
             sage: el.l(4,3)
             1
             sage: el.l(5,3)
-            0
+            2
+
         """
         return len(self.L(k,p))
 
+    @cached_method
     def d(self, k, p):
         """
         An invariant from [Kudla, Yang - Eisenstein Series for SL(2)].
@@ -1398,56 +1930,30 @@ class LocalSpaceByJordanDataElement(SageObject):
             sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
             sage: J = F.jordan_decomposition()
             sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0), 3 : (0,)})
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0,0,0), 3 : (0,0,0)})
             sage: el.d(0,2)
             0
             sage: el.d(1,2)
-            1
-            sage: el.d(2,2)
-            1
-            sage: el.d(3,2)
-            1/2
-            sage: el.d(4,2)
             0
+            sage: el.d(3,2)
+            -5/2
+            sage: el.d(4,2)
+            -4
             sage: el.d(5,2)
+            -11/2
+            sage: el.d(0,3)
+            0
+            sage: el.d(1,3)
+            0
+            sage: el.d(2,3)
             -1/2
-            sage: el.d(0,3)
-            0
-            sage: el.d(1,3)
-            1
-            sage: el.d(2,3)
-            3/2
             sage: el.d(3,3)
-            2
+            -1
             sage: el.d(4,3)
-            5/2
+            -3/2
             sage: el.d(5,3)
-            3
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (1/2,1/2,0), 3 : (1/3,)})
-            sage: el.d(0,2)
-            0
-            sage: el.d(1,2)
-            1
-            sage: el.d(2,2)
-            2
-            sage: el.d(3,2)
-            5/2
-            sage: el.d(4,2)
-            3
-            sage: el.d(5,2)
-            7/2
-            sage: el.d(0,3)
-            0
-            sage: el.d(1,3)
-            1
-            sage: el.d(2,3)
-            2
-            sage: el.d(3,3)
-            3
-            sage: el.d(4,3)
-            4
-            sage: el.d(5,3)
-            5
+            -2
+
         """
         if p==2:
             return (k
@@ -1457,6 +1963,7 @@ class LocalSpaceByJordanDataElement(SageObject):
         else:
             return k + sum([min([self.integral_parent().valuation(i,p)-k,0]) for i in self.H(p)])/Integer(2)
 
+    @cached_method
     def eps(self, k, p):
         """
         An invariant from [Kudla, Yang - Eisenstein Series for SL(2)].
@@ -1473,7 +1980,28 @@ class LocalSpaceByJordanDataElement(SageObject):
 
         EXAMPLES::
 
-            sage: el = LocalSpaceByJordanDataElement(L, {2 : (1/2,1/2,0), 3 : (1/3,)})
+            sage: from finite_quadratic_module import FiniteQuadraticModule
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/2,1/2,1/4), 3 : (0,0,1/3)})
+            sage: el.eps(0,2)
+            1
+            sage: el.eps(1,2)
+            1
+            sage: el.eps(2,2)
+            1
+            sage: el.eps(3,2)
+            1
+            sage: el.eps(0,3)
+            1
+            sage: el.eps(1,3)
+            -1
+            sage: el.eps(2,3)
+            1
+            sage: el.eps(3,3)
+            -1
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/2,1/2,0), 3 : (0,0,0)})
             sage: el.eps(0,2)
             1
             sage: el.eps(1,2)
@@ -1485,19 +2013,59 @@ class LocalSpaceByJordanDataElement(SageObject):
             sage: el.eps(0,3)
             1
             sage: el.eps(1,3)
-            1
+            -1
             sage: el.eps(2,3)
             1
             sage: el.eps(3,3)
-            1
+            -1
+
         """
         if p==2:
             return prod([self.integral_parent().unit(j, p) for j in self.L(k, p)])
         else:
-            return ((self.modified_hilbert_symbol(-1,p)**floor((self.l(k,p)/2)))
+            return ((self.modified_hilbert_symbol(-1,p)**floor((self.l(k,p)/Integer(2))))
                     * prod([self.modified_hilbert_symbol(self.integral_parent().unit(i,p),p) for i in self.L(k,p)]))
 
+    @cached_method
     def K0(self, p):
+        """
+        An invariant from [Kudla, Yang - Eisenstein Series for SL(2)].
+        Used in the computation of Eisenstein series for the parent lattice and the Weil representation.
+
+        INPUT:
+            `p` -- a positive prime number
+
+        OUTPUT:
+            an integer
+
+        EXAMPLES::
+
+            sage: from finite_quadratic_module import FiniteQuadraticModule
+            sage: F = FiniteQuadraticModule('2^2.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0,0,0), 3 : (0,0,0)})
+            sage: el.K0(2)
+            +Infinity
+            sage: el.K0(3)
+            +Infinity
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/2,0,0), 3 : (0,0,1/3)})
+            sage: el.K0(2)
+            0
+            sage: el.K0(3)
+            0
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0,0,1/4), 3 : (0,0,1)})
+            sage: el.K0(2)
+            0
+            sage: el.K0(3)
+            +Infinity
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0,0,1/2), 3 : (0,0,1)})
+            sage: el.K0(2)
+            2
+            sage: el.K0(3)
+            +Infinity
+
+        """
         #n = self.integral_parent().dimension()
         n = len(self._mu_p(p))
         if p==2:
@@ -1520,30 +2088,240 @@ class LocalSpaceByJordanDataElement(SageObject):
             else:
                 return min([self.integral_parent().valuation(i,p) + self._mu_p_i(p,i).valuation(p)
                             for i in range(n) if i not in self.H(p)])
-
+    @cached_method
     def p(self, k):
-        return (-1)**sum([min([self.integral_parent().valuation(i,2)-k,0]) for i in self.H(2)['N']])
+        """
+        An invariant from [Kudla, Yang - Eisenstein Series for SL(2)].
+        Used in the computation of Eisenstein series for the parent lattice and the Weil representation.
+        This invariant is only used in the 2-adic case and equals -1 or 1.
 
+        INPUT:
+            `k` -- an integer
+
+        OUTPUT:
+            -1 or 1
+
+        EXAMPLES::
+
+            sage: from finite_quadratic_module import FiniteQuadraticModule
+            sage: F = FiniteQuadraticModule('2^-4.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L.group_structure(2)
+            [1, 1, 2, 2, 2, 2, 4]
+            sage: L.group_structure(3)
+            [1, 1, 3]
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/2,1/2,1/2,1/2,1/2), 3 : (0,0,1/3)})
+            sage: el.p(0)
+            1
+            sage: el.p(1)
+            -1
+            sage: el.p(2)
+            1
+            sage: el.p(3)
+            -1
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0,0,0,0,0), 3 : (0,0,0)})
+            sage: el.p(0)
+            1
+            sage: el.p(1)
+            -1
+            sage: el.p(2)
+            -1
+            sage: el.p(3)
+            -1
+
+        """
+        return Integer(-1)**sum([min([self.integral_parent().valuation(i,2)-k,0]) for i in self.H(2)['N']])
+
+    @cached_method
     def delta(self, k):
+        """
+        An invariant from [Kudla, Yang - Eisenstein Series for SL(2)].
+        Used in the computation of Eisenstein series for the parent lattice and the Weil representation.
+        This invariant is only used in the 2-adic case and equals 0 or 1.
+
+        INPUT:
+            `k` -- an integer
+
+        OUTPUT:
+            0 or 1
+
+        EXAMPLES::
+
+            sage: from finite_quadratic_module import FiniteQuadraticModule
+            sage: F = FiniteQuadraticModule('2^-4.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0,0,0,0,0), 3 : (0,0,0)})
+            sage: el.delta(0)
+            1
+            sage: el.delta(1)
+            1
+            sage: el.delta(2)
+            0
+            sage: el.delta(3)
+            1
+            sage: el.delta(4)
+            1
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,1/2,1/2,1/2,1/2,1/2), 3 : (0,0,1/3)})
+            sage: el.delta(0)
+            1
+            sage: el.delta(1)
+            1
+            sage: el.delta(2)
+            1
+            sage: el.delta(3)
+            1
+            sage: el.delta(4)
+            1
+
+        """
         for j in self.H(2)['H']:
             if k == self.integral_parent().valuation(j,2):
                 return 0
         return 1
 
+    @cached_method
     def modified_hilbert_symbol(self, a, p):
+        """
+        Returns 0 if a is not a unit in Zp(p), else return the Hilbert symbol (a,p)_p.
+
+        INPUT:
+            `a` -- an integer
+        
+            `p` -- a positive prime number
+
+        OUTPUT:
+            -1, 0 or 1
+
+        EXAMPLES::
+
+            sage: from finite_quadratic_module import FiniteQuadraticModule
+            sage: F = FiniteQuadraticModule('2^-4.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0,0,0,0,0), 3 : (0,0,0)})
+            sage: el.modified_hilbert_symbol(0,2)
+            0
+            sage: el.modified_hilbert_symbol(1,2)
+            1
+            sage: el.modified_hilbert_symbol(2,2)
+            0
+            sage: el.modified_hilbert_symbol(3,2)
+            -1
+            sage: el.modified_hilbert_symbol(4,2)
+            0
+            sage: el.modified_hilbert_symbol(5,2)
+            -1
+            sage: el.modified_hilbert_symbol(6,2)
+            0
+            sage: el.modified_hilbert_symbol(7,2)
+            1
+            sage: el.modified_hilbert_symbol(0,3)
+            0
+            sage: el.modified_hilbert_symbol(1,3)
+            1
+            sage: el.modified_hilbert_symbol(2,3)
+            -1
+            sage: el.modified_hilbert_symbol(0,5)
+            0
+            sage: el.modified_hilbert_symbol(1,5)
+            1
+            sage: el.modified_hilbert_symbol(2,5)
+            -1
+            sage: el.modified_hilbert_symbol(3,5)
+            -1
+            sage: el.modified_hilbert_symbol(4,5)
+            1
+
+        """
         if Zp(p)(a).is_unit():
             return hilbert_symbol(a,p,p)
         else:
             return 0
 
+    @cached_method
     def f1(self, x, p):
+        """
+        An invariant from [Kudla, Yang - Eisenstein Series for SL(2)].
+        Used in the computation of Eisenstein series for the parent lattice and the Weil representation.
+
+        INPUT:
+            `x` -- an integer
+        
+            `p` -- a positive prime number
+
+        OUTPUT:
+            -1/p, -1/sqrt(p) or 1/sqrt(p)
+
+        EXAMPLES::
+
+            sage: from finite_quadratic_module import FiniteQuadraticModule
+            sage: F = FiniteQuadraticModule('2^-4.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0,0,0,0,0), 3 : (0,0,0)})
+            sage: el.f1(1 * 3**0, 3)
+            -1/3
+            sage: el.f1(1 * 3**1, 3)
+            1/3*sqrt(3)
+            sage: el.f1(2 * 3**1, 3)
+            -1/3*sqrt(3)
+
+        """
         a=valuation(x,p)
         if is_even(self.l(a+1,p)):
             return -1/p
         else:
             return self.modified_hilbert_symbol(x * p**-a,p)/sqrt(p)
 
+    @cached_method
     def t(self, m, p):
+        """
+        An invariant from [Kudla, Yang - Eisenstein Series for SL(2)].
+        Used in the computation of Eisenstein series for the parent lattice and the Weil representation.
+        Returns `m` minus the quadratic form evaluated at those coordinates of self that are not in the list
+        `H`, `M` or `N` (the listst that point to (pairs of) coordinates that are p-adic integers).
+
+        INPUT:
+            `m` -- a rational
+        
+            `p` -- a positive prime number
+
+        OUTPUT:
+            a rational
+
+        EXAMPLES::
+
+            sage: from finite_quadratic_module import FiniteQuadraticModule
+            sage: F = FiniteQuadraticModule('2^-4.4_3^-1.3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L.group_structure(2)
+            [1, 1, 2, 2, 2, 2, 4]
+            sage: L.group_structure(3)
+            [1, 1, 3]
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0,0,0,0,1/4), 3 : (0,0,1/3)})
+            sage: el.Q()
+            17/24
+            sage: el.local_Q_p(2)
+            3/8
+            sage: el.local_Q_p(3)
+            1/3
+            sage: el.t(3/8,2)
+            0
+            sage: el.t(3/8+1,2)
+            1
+            sage: el.t(3/8+2,2)
+            2
+            sage: el.t(1/3,3)
+            0
+            sage: el.t(1/3+1,3)
+            1
+            sage: el.t(1/3+2,3)
+            2
+
+        """
         n = len(self._mu_p(p))
         #n = self.integral_parent().dimension()
         if p==2:
@@ -1566,14 +2344,109 @@ class LocalSpaceByJordanDataElement(SageObject):
                            for i in range(n) if i not in self.H(p)])
                     )
 
+    @cached_method
     def nu(self, m, k):
+        """
+        An invariant from [Kudla, Yang - Eisenstein Series for SL(2)].
+        Used in the computation of Eisenstein series for the parent lattice and the Weil representation.
+        This invariant is only used in the 2-adic case.
+
+        INPUT:
+            `m` -- a rational
+         
+            `k` -- an integer
+
+        OUTPUT:
+            a rational
+
+        EXAMPLES::
+
+            sage: from finite_quadratic_module import FiniteQuadraticModule
+            sage: F = FiniteQuadraticModule('2_1^1.4_3^-1.8_5^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0,0,0)})
+            sage: el.nu(0,0)
+            0
+            sage: el.nu(0,1)
+            0
+            sage: el.nu(0,2)
+            -1
+            sage: el.nu(0,3)
+            -4
+            sage: el.nu(0,4)
+            -9
+            sage: el.nu(0,5)
+            -9
+
+        """
         return (self.t(m, 2) * 2**(Integer(3)-k)
                 - sum([self.integral_parent().unit(j,2)
                        for j in self.H(2)['H']
                        if self.integral_parent().valuation(j,2) < k])
                 )
 
+    @cached_method
     def Wpoly(self, p, m, verbose=False):
+        """
+        Returns a polynomial or rational function corresponding to the local Whittaker
+        (cnf. local densities) function as described in [Kudla, Yang - Eisenstein Series for SL(2)].
+        
+        INPUT:
+            `p` -- a positive prime number
+        
+            `m` -- a rational number
+
+        OUTPUT:
+            a polynomial or rational function in one variable.
+
+        EXAMPLES::
+
+            sage: from finite_quadratic_module import FiniteQuadraticModule
+            sage: F = FiniteQuadraticModule('2_1^1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0)})
+            sage: el.Wpoly(2,1/2)
+            0
+
+            sage: el.Wpoly(2,1)
+            1/4*X^3 + 1/4*X^2 + 1
+            sage: el.Wpoly(2,2)
+            -1/4*X^2 + 1
+            sage: el.Wpoly(2,3)
+            -1/4*X^2 + 1
+            sage: el.Wpoly(2,4)
+            1/8*X^5 + 1/8*X^4 + 1/4*X^2 + 1
+            sage: el.Wpoly(2,5)
+            -1/4*X^3 + 1/4*X^2 + 1
+            sage: el.Wpoly(2,6)
+            -1/4*X^2 + 1
+
+            sage: F = FiniteQuadraticModule('3^-1.9^-1.27^-1.81^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: el = LocalSpaceByJordanDataElement(L, {3 : (0,0,0,0,0,0)})
+            sage: el.Wpoly(3,1)
+            -1/3*X + 1
+            sage: el.Wpoly(3,2)
+            -1/3*X + 1
+            sage: el.Wpoly(3,3)
+            1/3*X^2 + 2/3*X + 1
+            sage: el.Wpoly(3,4)
+            -1/3*X + 1
+            sage: el.Wpoly(3,5)
+            -1/3*X + 1
+            sage: el.Wpoly(3,6)
+            -1/3*X^2 + 2/3*X + 1
+            sage: el.Wpoly(3,7)
+            -1/3*X + 1
+            sage: el.Wpoly(3,8)
+            -1/3*X + 1
+            sage: el.Wpoly(3,9)
+            1/9*X^3 + 2/3*X + 1
+
+        """
         R = PolynomialRing(QQ, 'X')
         if (m-self.Q()).valuation(p) < 0:
             return R(0)
@@ -1739,6 +2612,67 @@ class LocalSpaceByJordanDataElement(SageObject):
         raise RuntimeError, "A result should already have been returend."
 
     def W(self, p, m, s, min_precision=53):
+        """
+        Evaluates the local Whittaker (cnf. local densities) function as described in
+        [Kudla, Yang - Eisenstein Series for SL(2)] at p**-s.
+        
+        INPUT:
+            `p` -- a positive prime number
+        
+            `m` -- a rational number
+
+            `s` -- an integer, a rational or a complex number
+
+        OUTPUT:
+            a number (mostly complex or rational, depending on the input)
+
+        EXAMPLES::
+
+            sage: from finite_quadratic_module import FiniteQuadraticModule
+            sage: F = FiniteQuadraticModule('2_1^1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: el = LocalSpaceByJordanDataElement(L, {2 : (0,0,0)})
+            sage: el.W(2,1/2,3)
+            0
+
+            sage: el.W(2,1,3)
+            2057/2048
+            sage: el.W(2,2,3)
+            255/256
+            sage: el.W(2,3,3)
+            255/256
+            sage: el.W(2,4,3)
+            263177/262144
+            sage: el.W(2,5,3)
+            2055/2048
+            sage: el.W(2,6,3)
+            255/256
+
+            sage: F = FiniteQuadraticModule('3^-1.9^-1.27^-1.81^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: el = LocalSpaceByJordanDataElement(L, {3 : (0,0,0,0,0,1/3)})
+            sage: el.W(3,1,7)
+            6560/6561
+            sage: el.W(3,2,7)
+            6560/6561
+            sage: el.W(3,3,7)
+            14353282/14348907
+            sage: el.W(3,4,7)
+            6560/6561
+            sage: el.W(3,5,7)
+            6560/6561
+            sage: el.W(3,6,7)
+            14353280/14348907
+            sage: el.W(3,7,7)
+            6560/6561
+            sage: el.W(3,8,7)
+            6560/6561
+            sage: el.W(3,9,7)
+            6563/6561
+
+        """
         wpoly = self.Wpoly(p, m)
         
         if type(s) == ComplexNumber:
@@ -1769,6 +2703,11 @@ class LocalSpaceByJordanDataElement(SageObject):
         return resultcomplex
 
     def _Wpoly_invariants(self, p):
+        """
+        Returns a touple of touples containing p**self.K0(p) Whittaker polynomials.
+        These can be used as invariants of elements under the action of the orthogonal group.
+        This function is expensive, but can be usefull for research purposes.
+        """
         order = self.order_p(p)
         Qfloor = self.Q()
         #localQfloor = self.local_Q_p(p)
@@ -1787,9 +2726,178 @@ class LocalSpaceByJordanDataElement(SageObject):
         return tuple(invariants)
 
     def Wpoly_invariants(self, p):
+        """
+        Returns touples of touples of touples containing enought Whittaker polynomials.
+        These can be used as invariants of elements under the action of the orthogonal group.
+        If p is an odd prime, there is exactly one orbit with these discriminants.
+        For p=2, we do not know if this still holds.
+        This function is expensive, but can be usefull for research purposes.
+        """
         return [(p**k, self.scale(p, p**k)._Wpoly_invariants(p)) for k in range(self.order_p(p).valuation(p))]
 
     def eisenstein_series(self, weight, allow_weight_2 = True, prec=10, verbose=False):
+        """
+        Return the Eisenstein series associated to self to precision `prec`.
+        If L is a lattice that provides the same local data we use here, then this returns the Eisenstein series
+        associated to the characteristic function of self + L. This is part of a vector valued Eisenstein series
+        of weight `weight` for this lattice and the Weil representation.
+
+        INPUT:
+            `weight` -- a half integer, the weight of the Eisenstein series
+        
+            `prec` -- the precision to which the Eisenstein series will be computed (default: 10)
+
+        OUTPUT:
+            a dicionary
+        
+        EXAMPLES::
+
+            ## Compare with classical Modular Forms
+            ## ------------------------------------
+            sage: from sage.all import ModularForms
+
+            ## Hyperbolic plane
+            ## ----------------        
+            sage: from finite_quadratic_module import FiniteQuadraticModule
+            sage: F = FiniteQuadraticModule(matrix(2,2,[0,1,1,0]))
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: el = LocalSpaceByJordanDataElement(L, {})
+            sage: el.eisenstein_series(4, prec = 10)
+
+            {0: 1,
+             1: 240,
+             2: 2160,
+             3: 6720,
+             4: 17520,
+             5: 30240,
+             6: 60480,
+             7: 82560,
+             8: 140400,
+             9: 181680}
+            sage: eis  = ModularForms(1,4).eisenstein_series()[0]
+            sage: coeffs = eis.coefficients(range(100))
+            sage: d = dict((j, coeffs[j] / coeffs[0]) for j in range(100))
+            sage: d == el.eisenstein_series(4,prec = 100)
+            True
+
+
+            sage: L.eisenstein_series(6, prec = 10)
+            {(0, 0): {0: 1,
+              1: -504,
+              2: -16632,
+              3: -122976,
+              4: -532728,
+              5: -1575504,
+              6: -4058208,
+              7: -8471232,
+              8: -17047800,
+              9: -29883672}}
+            sage: eis = ModularForms(1,6).eisenstein_series()[0]
+            sage: coeffs = eis.coefficients(range(100))
+            sage: d = dict((j, coeffs[j] / coeffs[0]) for j in range(100))
+            sage: d == L.eisenstein_series(6, prec = 100)[(0,0)]
+            True
+
+            sage: L.eisenstein_series(8, prec = 10)
+            {(0, 0): {0: 1,
+              1: 480,
+              2: 61920,
+              3: 1050240,
+              4: 7926240,
+              5: 37500480,
+              6: 135480960,
+              7: 395301120,
+              8: 1014559200,
+              9: 2296875360}}
+            sage: eis = ModularForms(1,8).eisenstein_series()[0]
+            sage: coeffs = eis.coefficients(range(100))
+            sage: d = dict((j, coeffs[j] / coeffs[0]) for j in range(100))
+            sage: d == L.eisenstein_series(8, prec = 100)[(0,0)]
+            True
+
+            ## The E8 lattice
+            ## --------------
+            sage: L = Lattice(matrix(8,8,[2,-1,0,0,0,0,0,0,
+            ....: -1,2,-1,0,0,0,0,0,
+            ....: 0,-1,2,-1,0,0,0,-1,
+            ....: 0,0,-1,2,-1,0,0,0,
+            ....: 0,0,0,-1,2,-1,0,0,
+            ....: 0,0,0,0,-1,2,-1,0,
+            ....: 0,0,0,0,0,-1,2,0,
+            ....: 0,0,-1,0,0,0,0,2]))
+
+            sage: L.eisenstein_series(4, prec = 10)
+            {(0, 0, 0, 0, 0, 0, 0, 0): {0: 1,
+              1: 240,
+              2: 2160,
+              3: 6720,
+              4: 17520,
+              5: 30240,
+              6: 60480,
+              7: 82560,
+              8: 140400,
+              9: 181680}}
+            sage: eis = ModularForms(1,4).eisenstein_series()[0]
+            sage: coeffs = eis.coefficients(range(100))
+            sage: d = dict((j, coeffs[j] / coeffs[0]) for j in range(100))
+            sage: d == L.eisenstein_series(4, prec = 100)[(0,0,0,0,0,0,0,0)]
+            True
+
+            sage: L.eisenstein_series(6, prec = 10)
+            {(0, 0, 0, 0, 0, 0, 0, 0): {0: 1,
+            1: -504,
+            2: -16632,
+            3: -122976,
+            4: -532728,
+            5: -1575504,
+            6: -4058208,
+            7: -8471232,
+            8: -17047800,
+            9: -29883672}}
+            sage: eis = ModularForms(1,6).eisenstein_series()[0]
+            sage: coeffs = eis.coefficients(range(100))
+            sage: d = dict((j, coeffs[j] / coeffs[0]) for j in range(100))
+            sage: d == L.eisenstein_series(6, prec = 100)[(0,0,0,0,0,0,0,0)]
+            True
+
+            sage: L.eisenstein_series(8, prec = 10)
+            {(0, 0, 0, 0, 0, 0, 0, 0): {0: 1,
+              1: 480,
+              2: 61920,
+              3: 1050240,
+              4: 7926240,
+              5: 37500480,
+              6: 135480960,
+              7: 395301120,
+              8: 1014559200,
+              9: 2296875360}}
+            sage: eis = ModularForms(1,8).eisenstein_series()[0]
+            sage: coeffs = eis.coefficients(range(100))
+            sage: d = dict((j, coeffs[j] / coeffs[0]) for j in range(100))
+            sage: d == L.eisenstein_series(8, prec = 100)[(0,0,0,0,0,0,0,0)]
+            True
+
+        ::
+
+            ## The following was confirmed by the Siegel-Weil-Formula after adding an E8-lattice
+            ## ---------------------------------------------------------------------------------
+            sage: F = FiniteQuadraticModule('3^-1')
+            sage: J = F.jordan_decomposition()
+            sage: L = LocalSpaceByJordanData(J._jordan_decomposition_data())
+            sage: L.group_structure(3)
+            [1, 1, 1, 3]
+            sage: el = LocalSpaceByJordanDataElement(L, {3 : (0,0,0,0)})
+            sage: el.eisenstein_series(5, prec = 5)
+            {0: 1, 1: 246, 2: 3600, 3: 19686, 4: 59286}
+            sage: el = LocalSpaceByJordanDataElement(L, {3 : (0,0,0,1/3)})
+            sage: el.eisenstein_series(5, prec = 5)
+            {1/3: 3, 4/3: 723, 7/3: 7206, 10/3: 28080, 13/3: 85686}
+            sage: el = LocalSpaceByJordanDataElement(L, {3 : (0,0,0,2/3)})
+            sage: el.eisenstein_series(5, prec = 5)
+            {1/3: 3, 4/3: 723, 7/3: 7206, 10/3: 28080, 13/3: 85686}
+        
+        """
         if verbose:
             print "weight:", weight, type(weight)
         parent = self.integral_parent()
@@ -1815,7 +2923,7 @@ class LocalSpaceByJordanDataElement(SageObject):
                 raise NotImplementedError, "l=" + l.str() + ", kappa=" + kappa.str()
         else:
             #Checking conditon (2.10) in [KY]
-            if not l.is_integer() or ((-1)**l != kappa.sign()):
+            if not l.is_integer() or (Integer(-1)**l != kappa.sign()):
                 raise NotImplementedError, "l=" + l.str() + ", kappa=" + kappa.str()
 
         S = parent.primes()
@@ -1855,8 +2963,10 @@ class LocalSpaceByJordanDataElement(SageObject):
             fac /= zeta__exact(Integer(2*l - 1))
             for p in S:
                 if verbose:
-                    print "p:", p
+                    print "p:", p, 
                 fac *= parent.weil_index(p) * p**(-parent.det().valuation(p)/Integer(2)) / (1 - p**Integer(1 - 2*l))
+                if verbose:
+                    print fac
             fac = {0 : fac}
             #L_values = dict()
             if verbose:
@@ -1977,3 +3087,49 @@ class LocalSpaceByJordanDataElement(SageObject):
         #    self._lattice_data['eisenstein_prec'][l] = prec
         #    self._lattice_data['eisenstein_series'][l] = result                            
         return result
+
+    def small_coefficients(self, n, N):
+        """
+        The coefficients of the Eisenstein series which are small enough with
+        respect to the search of Borcherds products of singular weight.
+        """
+        d = self.integral_parent().det()
+        eis_weight = n / Integer(2) + 1
+        sing_weight = n / Integer(2) - 1
+        C = C_eisenstein_coeff_estimate(eis_weight, d, N)
+        bound = n / Integer(2) - 1
+        if self.order() in [1,2]:
+            bound *= 2
+        prec = floor((C**-1 * bound)**(Integer(2)/n) ) + 1
+
+        eis = self.eisenstein_series(eis_weight, prec = prec)
+        result = dict()
+        #b = False
+
+        for k in eis.keys():
+            if -eis[k] <= bound:
+                result[k] = eis[k]
+                #b = True
+
+        if self.order() == 1:
+            del result[0]
+
+        return result
+
+def C_eisenstein_coeff_estimate(k, d, N):
+    """
+    A constand used to estimate the non zero coefficients of Eisenstein series of weight k
+    for a lattice of determinant d splitting a scaled hyperbolic plane H(N)."""
+    m = Integer(2)*k
+    assert m in ZZ
+    result = Integer(2)**(k+1) * pi**k / sqrt(abs(d)) / gamma__exact(k)
+    if is_even(m):
+        result *= (Integer(2)-zeta(k-1)) / zeta(k)
+        for p in (Integer(2)*d).prime_divisors():
+            result *= p**((3-Integer(2)*k)*valuation(N,p)) * (1-p**Integer(-1))
+    else:
+        result *= (Integer(2)-zeta(k-1/Integer(2))) / zeta(k-1/Integer(2))
+        for p in (Integer(2)*d).prime_divisors():
+            result *= p**((3-Integer(2)*k)*valuation(N,p)) * (1-p**Integer(-1)) / (1-p**(1-Integer(2)*k))
+    return result / Integer(2) # Here we need the factor 1/2 due to different normalizations in Bruinier-Kuss and Kudla-Yang
+
